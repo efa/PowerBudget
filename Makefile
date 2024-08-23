@@ -16,8 +16,8 @@
 
 # Makefile used to build to Linux, MinGW/Win, macOS
 
-SRCCLI = powerb.c fileIo.c
-SRCGUI = powerbGui.c fileIo.c
+SRCCLI = powerb.c powerbLib.c fileIo.c
+SRCGUI = powerbGui.c powerbLib.c fileIo.c
 SRC = $(SRCCLI) $(SRCGUI)
 
 OBJCLI = $(SRCCLI:.c=.o)
@@ -30,7 +30,7 @@ BIN = $(BINCLI) $(BINGUI)
 
 # Flags
 CFLAGS += -std=gnu99 -O2 -I/usr/include/iniparser
-GFLAGS += -std=gnu99 -O2
+GFLAGS += -std=gnu99 -O2 -I/usr/include/iniparser
 GFLAGS += `sdl2-config --cflags`
 
 ifeq ($(OS),Windows_NT)
@@ -42,17 +42,19 @@ else
 		LIBS = -lSDL2 -framework OpenGL -lm
 	else
 		LIBS += -liniparser
-		GLIBS += -lm -ldl `sdl2-config --libs`
+		GLIBS += -liniparser -lm `sdl2-config --libs`
 	endif
 endif
 
 all: $(BIN)
 
-$(BIN): fileIo.o
+$(BIN): fileIo.o powerbLib.o
 	$(CC) $(SRCCLI) $(CFLAGS) $(LIBS) -o $(BINCLI)
 	$(CC) $(SRCGUI) $(GFLAGS) $(GLIBS) -o $(BINGUI)
 
 fileIo.o: fileIo.c
+
+powerbLib.o: powerbLib.c
 
 debug:
 	$(CC) -g -fsanitize=address $(SRCCLI) $(CFLAGS) $(LIBS) -o $(BINCLI)

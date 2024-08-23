@@ -42,11 +42,22 @@
 #include "nuklear.h"
 #include "nuklear_sdl_renderer.h"
 
-#define WINDOW_WIDTH 1860
+#define WINDOW_WIDTH  1860
 #define WINDOW_HEIGHT 1010
 
-#include "powerb.h"
+#include "powerbLib.h"
 #include "fileIo.h"
+
+#define PRINTOFF      0
+#define PRINTERROR    1
+#define PRINTWARN     2
+#define PRINTBATCH    3
+#define PRINTF        4
+#define PRINTDEBUG    5
+#define PRINTVERBOSE  6
+#define PRINTALL      7
+
+u08 dbgLev=PRINTF;
 
 /* ===============================================================
  *
@@ -94,7 +105,7 @@ int initNodeData(nTy* node) {
    }
    node->out=0;
    return 0;
-}
+} // int initNodeData(nTy* node)
 
 int fillNodeData(int id, nTy* valuesPtr) {
    struct node* nodePtr;
@@ -115,34 +126,7 @@ int fillNodeData(int id, nTy* valuesPtr) {
    //printf("coping address to node_editor struct ...\n");
    //nodePtr->values=nPtr[nCnt-1]; // so node_editor struct point to allocated vector
    return 0;
-}
-
-#define PRINTOFF      0
-#define PRINTERROR    1
-#define PRINTWARN     2
-#define PRINTBATCH    3
-#define PRINTF        4
-#define PRINTDEBUG    5
-#define PRINTVERBOSE  6
-#define PRINTALL      7
-
-u08 dbgLev=PRINTF;
-
-#if 0
-/* open a fileName in WriteOnly and return the filePtr or NULL on ERROR */
-FILE* openWrite(char* fileName) {
-   FILE* out;
-   if (fileName==NULL) {
-      if (dbgLev>=PRINTERROR) printf("ERROR %s: fileName point to NULL\n", __FUNCTION__);
-      return NULL;
-   }
-   out = fopen(fileName, "w");
-   if (out == NULL) {
-      if (dbgLev>=PRINTERROR) printf("ERROR %s: cannot open File:\"%s\"\n", __FUNCTION__, fileName);
-   }
-   return out;
-} // openWrite()
-#endif
+} // int fillNodeData(int id, nTy* valuesPtr)
 
 int saveINI(void* nodedit) {
    struct node_editor* nodeditPtr;
@@ -199,12 +183,49 @@ int saveINI(void* nodedit) {
    fwrite(bufferPtr, 1, out, filePtr);
    fclose(filePtr);
    return 0;
+} // int saveINI(void* nodedit)
+
+int loadINIres(void* nodedit) {
+   struct node_editor* nodeditPtr;
+   nodeditPtr=nodedit;
+   struct node* nodePtr;
+return 0;
+   // at first remove all existing nodes and links
+   for (int n=0; n<nodeditPtr->node_count; n++) {
+      nodePtr=&nodeditPtr->node_buf[n];
+      node_editor_delnode(nodeditPtr, nodePtr);
+   }
+   node_editor_init(&nodeEditor);
+   nodeEditor.initialized = 1;
+   int id;
+   nTy node;
+   char name[5];
+
+   int ret;
+   int sect;
+   ret=loadINI(DefIniResFile, &sect);
+
+   for (int n=0; n<sect; n++) {
+      strcpy(name, "IN ");
+      id=node_editor_add(nodeditPtr, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
+      initNodeData(&node);
+      strcpy(node.label, name); node.type=0; strcpy(node.label,"IN"); node.Vo=5;
+      fillNodeData(id, &node);
+
+      strcpy(name, "SR1");
+      id=node_editor_add(nodeditPtr, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
+      initNodeData(&node);
+      strcpy(node.label, name); node.type=1; strcpy(node.label,"Buck"); strcpy(node.refdes,"U14");
+      strcpy(node.in[0],"IN"); node.eta=0.9; node.Vo=1.8;
+      fillNodeData(id, &node);
+   }
+   return 0;
 }
 
 int calcINI() {
    system("powerb");
    return 0;
-}
+} // int calcINI()
 
 #if 0
 char* dtoa(double d) { // convert a double to an auto-allocated string. Rememeber to free the string
@@ -325,40 +346,6 @@ main(int argc, char *argv[])
         nk_input_end(ctx);
 
         /* GUI */
-#if 0
-        if (nk_begin(ctx, "Demo", nk_rect(50, 50, 230, 250),
-            NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
-            NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
-        {
-            enum {EASY, HARD};
-            static int op = EASY;
-            static int property = 20;
-
-            nk_layout_row_static(ctx, 30, 80, 1);
-            if (nk_button_label(ctx, "button"))
-                fprintf(stdout, "button pressed\n");
-            nk_layout_row_dynamic(ctx, 30, 2);
-            if (nk_option_label(ctx, "easy", op == EASY)) op = EASY;
-            if (nk_option_label(ctx, "hard", op == HARD)) op = HARD;
-            nk_layout_row_dynamic(ctx, 25, 1);
-            nk_property_int(ctx, "Compression:", 0, &property, 100, 10, 1);
-
-            nk_layout_row_dynamic(ctx, 20, 1);
-            nk_label(ctx, "background:", NK_TEXT_LEFT);
-            nk_layout_row_dynamic(ctx, 25, 1);
-            if (nk_combo_begin_color(ctx, nk_rgb_cf(bg), nk_vec2(nk_widget_width(ctx),400))) {
-                nk_layout_row_dynamic(ctx, 120, 1);
-                bg = nk_color_picker(ctx, bg, NK_RGBA);
-                nk_layout_row_dynamic(ctx, 25, 1);
-                bg.r = nk_propertyf(ctx, "#R:", 0, bg.r, 1.0f, 0.01f,0.005f);
-                bg.g = nk_propertyf(ctx, "#G:", 0, bg.g, 1.0f, 0.01f,0.005f);
-                bg.b = nk_propertyf(ctx, "#B:", 0, bg.b, 1.0f, 0.01f,0.005f);
-                bg.a = nk_propertyf(ctx, "#A:", 0, bg.a, 1.0f, 0.01f,0.005f);
-                nk_combo_end(ctx);
-            }
-        }
-        nk_end(ctx);
-#endif
 
         /* -------------- EXAMPLES ---------------- */
         #ifdef INCLUDE_NODE_EDITOR
@@ -380,4 +367,4 @@ cleanup:
     SDL_DestroyWindow(win);
     SDL_Quit();
     return 0;
-}
+} // int main(int argc, char *argv[])

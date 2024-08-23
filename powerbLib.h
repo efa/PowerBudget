@@ -1,6 +1,6 @@
 /* PowerBudget v0.00.01a 2024/08/20 calculate power dissipation and budget */
 /* Copyright 2024 Valerio Messina http://users.iol.it/efa              */
-/* powerb.h is part of PowerBudget
+/* powerbLib.h is part of PowerBudget
    PowerBudget is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
@@ -14,7 +14,7 @@
    You should have received a copy of the GNU General Public License
    along with PowerBudget. If not, see <http://www.gnu.org/licenses/>. */
 
-/* powerb.h CLI interface: used by CLI and GUI to fill struct and write INI files */
+/* powerbLib.h LIB interface: used by CLI/GUI to fill struct and write INI files */
 
 #ifndef POWERB_H_
 #define POWERB_H_
@@ -48,12 +48,25 @@ typedef struct nTy { char name[5]; // "IN", "SRxx", "LRxx", "LDxx"
                      int out;
                    } nTy;
 
-int initNodeData(nTy* node);
+extern nTy* nPtr; // struct of nodes ptr
 
-int fillNodeData(int id, nTy* node);
 
-int saveINI(void* nodedit);
+int saveINI(void* nodedit); // GUI: before call "powerb"
 
-int calcINI();
+int calcINI(); // GUI: call to "powerb"
+
+int loadINIres(void* nodedit); // GUI: 
+
+int initNodeData(nTy* node); // GUI: 
+
+int fillNodeData(int id, nTy* node); // GUI: 
+
+int loadINI(char* graphFile, int* sectPtr); // LIB: load INI file
+
+int calcNodes(); // LIB: calc nodes
+
+int saveINIres(nTy* nPtr, int nodes); // LIB: save INI with results
+
+int freeMem(); // LIB: free mem
 
 #endif /* POWERB_H_ */

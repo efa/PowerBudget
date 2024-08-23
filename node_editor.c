@@ -176,30 +176,38 @@ node_editor_unlink(struct node_editor *editor, int link)
 }
 
 static void
-node_editor_del(struct node_editor *editor, int id) {
-   int l;
-   struct node* node;
-   if (editor->node_count>1) {
-      node=node_editor_find(editor, id);
-      printf("id:%d node:%p\n", id, node);
-      for (l=0; l<editor->link_count; l++) {
-         if(editor->links[l].output_id==node->ID ||
-            editor->links[l].input_id==node->ID) {
+node_editor_delnode(struct node_editor* editorPtr, struct node* nodePtr) {
+   if (editorPtr->node_count>1) {
+      // at first remove all linking and linked links to the node
+      for (int l=0; l<editorPtr->link_count; l++) {
+         if(editorPtr->links[l].output_id==nodePtr->ID ||
+            editorPtr->links[l].input_id==nodePtr->ID) {
             printf("Unlink link:%d\n", l);
-            node_editor_unlink(editor, l);
+            node_editor_unlink(editorPtr, l);
          }
       }
       int p;
-      for (p=0; p<editor->node_count-1; p++) {
-         if (&editor->node_buf[p]==node) break;
+      for (p=0; p<editorPtr->node_count-1; p++) {
+         if (&editorPtr->node_buf[p]==nodePtr) break;
       }
-      printf("editor->node_buf[%d]\n", p);
+      printf("editorPtr->node_buf[%d]\n", p);
       int n;
-      for (n=p; n<editor->node_count-1; n++) {
-         editor->node_buf[n]=editor->node_buf[n+1];
+      for (n=p; n<editorPtr->node_count-1; n++) {
+         editorPtr->node_buf[n]=editorPtr->node_buf[n+1];
       }
-      node_editor_pop(editor, node);
-      editor->node_count--;
+      node_editor_pop(editorPtr, nodePtr);
+      editorPtr->node_count--;
+   }
+   return;
+}
+static void
+node_editor_del(struct node_editor* editorPtr, int id) {
+   int l;
+   struct node* nodePtr;
+   if (editorPtr->node_count>1) {
+      nodePtr=node_editor_find(editorPtr, id);
+      printf("id:%d node:%p\n", id, nodePtr);
+      node_editor_delnode(editorPtr, nodePtr);
    }
    return;
 }
@@ -573,13 +581,15 @@ node_editor(struct nk_context *ctx)
                 if (nk_contextual_item_label(ctx, "New Load", NK_TEXT_CENTERED))
                     node_editor_add(nodedit, "LDx", nk_rect(400, 260, NODE_WIDTH, NODE_HEIGHT),
                             nk_rgb(255, 255, 255), 1, 0);
-                if (nk_contextual_item_label(ctx, "Load", NK_TEXT_CENTERED))
+                if (nk_contextual_item_label(ctx, "Load INI", NK_TEXT_CENTERED)) {
                     printf("load INI file\n");
-                if (nk_contextual_item_label(ctx, "Save", NK_TEXT_CENTERED)) {
+                    loadINIres(nodedit);
+                }
+                if (nk_contextual_item_label(ctx, "Save INI", NK_TEXT_CENTERED)) {
                     printf("save INI file\n");
                     saveINI(nodedit);
                 }
-                if (nk_contextual_item_label(ctx, "Calc", NK_TEXT_CENTERED)) {
+                if (nk_contextual_item_label(ctx, "Calc INI", NK_TEXT_CENTERED)) {
                     printf("calc INI file\n");
                     calcINI();
                 }
