@@ -24,6 +24,7 @@
 #define MaxIns  3 // number of max input supply for a load, count from 0
 #define MaxOut 17 // 16 number of max load for a supply, count from 0
 #define MaxRserie 4 // number of max R in serie
+#define MaxRsValue 10 // maximum Ohmic value for series resistors
 
 typedef struct nTy { char name[5]; // "IN", "SRxx", "LRxx", "LDxx"
                      int type;     // IN=0, SR=1, LR=2, RS=4, LD=3

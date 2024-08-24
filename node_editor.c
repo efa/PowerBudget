@@ -29,7 +29,7 @@
  * moment since it is based on a simple fixed array. If this is to be converted
  * into something more serious it is probably best to extend it.*/
 
-#include "powerb.h"
+#include "powerbLib.h"
 
 #define NODE_WIDTH  255
 #define NODE_HEIGHT 130
@@ -200,6 +200,7 @@ node_editor_delnode(struct node_editor* editorPtr, struct node* nodePtr) {
    }
    return;
 }
+
 static void
 node_editor_del(struct node_editor* editorPtr, int id) {
    int l;
@@ -228,6 +229,7 @@ node_editor_init(struct node_editor *editor)
     strcpy(node.label, name); node.type=0; strcpy(node.label,"IN"); node.Vo=5;
     fillNodeData(id, &node);
 
+#if 0
     strcpy(name, "SR1");
     id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
     initNodeData(&node);
@@ -265,11 +267,12 @@ node_editor_init(struct node_editor *editor)
     node_editor_link(editor, 1, 0, 4, 1);
     node_editor_link(editor, 3, 0, 4, 2);
     node_editor_link(editor, 3, 0, 5, 0);
+#endif
 }
 
 int nodeclick=0;
 int nodeid=0;
-char text[10]="text";
+//char text[10]="text";
 
 static int
 node_editor(struct nk_context *ctx)
@@ -564,14 +567,16 @@ node_editor(struct nk_context *ctx)
                 nk_layout_row_dynamic(ctx, 25, 1);
                 if (nk_contextual_item_label(ctx, "Del Link", NK_TEXT_CENTERED) &&
                     inclick==1) {
-                    /*printf("delete link:%d\n", link);
-                    printf("node id:%d inp:%d\n", id, inp);*/
+                    printf("delete link:%d\n", link);
+                    printf("node id:%d inp:%d\n", id, inp);
                     node_editor_unlink(nodedit, link);
+                    printf("\n");
                 }
                 if (nk_contextual_item_label(ctx, "Del Node", NK_TEXT_CENTERED)) {
                    if (nodeid>0) { // cannot remove node 0 IN
                       printf("delete node id:%d\n", nodeid);
                       node_editor_del(nodedit, nodeid);
+                      printf("\n");
                       nodeclick=0;
                    }
                 }

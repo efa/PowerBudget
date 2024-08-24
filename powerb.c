@@ -37,13 +37,16 @@ int main(int argNum, char* argV[]) {
    char* graphFile;
    if (argNum>0) {
       int len=strlen(argV[1]);
-      graphFile=malloc(len);
-      strcat(graphFile, argV[1]);
+      graphFile=malloc(len+1); // add NULL
+      graphFile[0]='\0';
+      strcpy(graphFile, argV[1]);
    } else { // default fileName
-      char fileName[]=DefIniFile;
+      char fileName[]=DefIniFile; // "powerb.ini"
       int len=strlen(fileName);
-      graphFile=malloc(len);
-      strcat(graphFile, fileName);
+      printf("len:%d\n", len);
+      graphFile=malloc(len+1); // add NULL
+      graphFile[0]='\0';
+      strcpy(graphFile, fileName);
    }
    printf("INI file:'%s'\n", graphFile);
 
@@ -58,5 +61,6 @@ int main(int argNum, char* argV[]) {
    saveINIres(nPtr, sect);
 
    ret=freeMem();
+   free(graphFile);
    return 0;
 }

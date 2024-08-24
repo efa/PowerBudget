@@ -28,21 +28,29 @@ BINCLI = powerb
 BINGUI = powerbGui
 BIN = $(BINCLI) $(BINGUI)
 
+BUILD?=release
+ifeq ($(BUILD),debug)
+   COPT=-O1 -g -fsanitize=address -fno-omit-frame-pointer
+   LOPT=-fsanitize=address
+else
+   COPT=-O3
+endif
+
 # Flags
-CFLAGS += -std=gnu99 -O2 -I/usr/include/iniparser
-GFLAGS += -std=gnu99 -O2 -I/usr/include/iniparser
+CFLAGS += -std=gnu99 $(COPT) -I/usr/include/iniparser
+GFLAGS += -std=gnu99 $(COPT) -I/usr/include/iniparser
 GFLAGS += `sdl2-config --cflags`
 
 ifeq ($(OS),Windows_NT)
 	BIN := $(BIN).exe
-	LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lm -lGLU32
+	LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lm -lGLU32 $(LOPT)
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Darwin)
-		LIBS = -lSDL2 -framework OpenGL -lm
+		LIBS = -lSDL2 -framework OpenGL -lm $(LOPT)
 	else
-		LIBS += -liniparser
-		GLIBS += -liniparser -lm `sdl2-config --libs`
+		LIBS += -liniparser $(LOPT)
+		GLIBS += -liniparser $(LOPT) -lm `sdl2-config --libs`
 	endif
 endif
 

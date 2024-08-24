@@ -111,7 +111,7 @@ int fillNodeData(int id, nTy* valuesPtr) {
    struct node* nodePtr;
    nodePtr=node_editor_find(&nodeEditor, id);
    //nCnt++;
-   size_t size=sizeof(nTy);
+   //size_t size=sizeof(nTy);
    //printf("id:%d nodePtr:%p nCnt:%d size:%d\n", id, nodePtr, nCnt, size);
    //printf("id:%d nodePtr:%p size:%d\n", id, nodePtr, size);
    //printf("nPtr:%p\n", nPtr);
