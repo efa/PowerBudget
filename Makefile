@@ -28,45 +28,41 @@ BINCLI = powerb
 BINGUI = powerbGui
 BIN = $(BINCLI) $(BINGUI)
 
-BUILD?=release
-ifeq ($(BUILD),debug)
-   COPT=-O1 -g -fsanitize=address -fno-omit-frame-pointer
-   LOPT=-fsanitize=address
-else
-   COPT=-O3
-endif
-
 # Flags
-CFLAGS += -std=gnu99 $(COPT) -I/usr/include/iniparser
-GFLAGS += -std=gnu99 $(COPT) -I/usr/include/iniparser
-GFLAGS += `sdl2-config --cflags`
+CFLAGS += -std=gnu99 -I/usr/include/iniparser
+GFLAGS += $(CFLAGS) `sdl2-config --cflags`
 
 ifeq ($(OS),Windows_NT)
 	BIN := $(BIN).exe
-	LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lm -lGLU32 $(LOPT)
+	LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lm -lGLU32
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Darwin)
-		LIBS = -lSDL2 -framework OpenGL -lm $(LOPT)
+		LIBS = -lSDL2 -framework OpenGL -lm
 	else
-		LIBS += -liniparser $(LOPT)
-		GLIBS += -liniparser $(LOPT) -lm `sdl2-config --libs`
+		LIBS += -liniparser
+		GLIBS += -liniparser -lm `sdl2-config --libs`
 	endif
 endif
 
+all: CFLAGS+=-O3
+all: GFLAGS+=-O3
 all: $(BIN)
 
-$(BIN): fileIo.o powerbLib.o
-	$(CC) $(SRCCLI) $(CFLAGS) $(LIBS) -o $(BINCLI)
-	$(CC) $(SRCGUI) $(GFLAGS) $(GLIBS) -o $(BINGUI)
+$(BIN):
+	$(CC) $(CFLAGS) $(SRCCLI) $(LIBS) -o $(BINCLI)
+	$(CC) $(GFLAGS) $(SRCGUI) $(GLIBS) -o $(BINGUI)
 
-fileIo.o: fileIo.c
+#fileIo.o: fileIo.c
 
-powerbLib.o: powerbLib.c
+#powerbLib.o: powerbLib.c
 
+debug: CFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
+debug: GFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
+debug: LDFLAGS+=-fsanitize=address
 debug:
-	$(CC) -g -fsanitize=address $(SRCCLI) $(CFLAGS) $(LIBS) -o $(BINCLI)
-	$(CC) -g -fsanitize=address $(SRCGUI) $(GFLAGS) $(GLIBS) -o $(BINGUI)
+	$(CC) $(CFLAGS) $(SRCCLI) $(LDFLAGS) $(LIBS) -o $(BINCLI)
+	$(CC) $(GFLAGS) $(SRCGUI) $(LDFLAGS) $(GLIBS) -o $(BINGUI)
 
 clean:
 	rm -f $(BIN) $(OBJ)

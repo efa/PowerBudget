@@ -43,8 +43,8 @@ struct node {
     struct nk_color color;
     int input_count;
     int output_count;
-    struct node *next;
     struct node *prev;
+    struct node *next;
     nTy values;
 };
 
@@ -55,6 +55,8 @@ struct node_link {
     int output_slot;
     struct nk_vec2 in;
     struct nk_vec2 out;
+    struct node_link* prev;
+    struct node_link* next;
 };
 
 struct node_linking {
@@ -70,6 +72,8 @@ struct node_editor {
     struct node_link links[64];
     struct node *begin;
     struct node *end;
+    struct node_link* firstlink;
+    struct node_link* lastlink;
     int node_count;
     int link_count;
     struct nk_rect bounds;
@@ -81,37 +85,259 @@ struct node_editor {
 struct node_editor nodeEditor;
 
 
-
+// add a node to linked list as last element
 static void
 node_editor_push(struct node_editor *editor, struct node *node)
 {
-    if (!editor->begin) {
+    if (!editor->begin) { // first node
         node->next = NULL;
         node->prev = NULL;
         editor->begin = node;
         editor->end = node;
-    } else {
+    } else { // next nodes
         node->prev = editor->end;
-        if (editor->end)
+        if (editor->end) // can remove condition
             editor->end->next = node;
         node->next = NULL;
         editor->end = node;
     }
 }
 
+int nodeShow(struct node* nodePtr) {
+   if (nodePtr==NULL) return 1;
+   printf("node ID:%d\n", nodePtr->ID);
+   printf("node name:'%s'\n", nodePtr->name);
+   //printf("node struct nk_rect bounds\n", nodePtr->);
+   //printf("node struct nk_color color\n", nodePtr->);
+   printf("node input_count:%d\n", nodePtr->input_count);
+   printf("node output_count:%d\n", nodePtr->output_count);
+   printf("node prevPtr:%p\n", nodePtr->prev);
+   printf("node nextPtr:%p\n", nodePtr->next);
+   //printf("node values\n", nodePtr->prevPtr);
+   printf("\n");
+   return 0;
+}
+
+void nodeEditorShow() {
+   printf("nodeEditor list node_count:%d\n", nodeEditor.node_count);
+   struct node* nodePtr=nodeEditor.begin;
+   for (int n=0; n<nodeEditor.node_count; n++) {
+      printf("nodeEditor n:%d id:%d node:%p\n", n, nodePtr->ID, nodePtr);
+      nodeShow(nodePtr);
+      nodePtr=nodePtr->next;
+   }
+   printf("\n");
+}
+
+#if 0
+void nodeEditorShowVect() {
+  printf("nodeEditor list node_count:%d\n", nodeEditor.node_count);
+  for (int n=0; n<nodeEditor.node_count; n++) {
+      printf("nodeEditor n:%d id:%d node:%p\n", n, nodeEditor.node_buf[n].ID, &nodeEditor.node_buf[n]);
+      nodeShow(&nodeEditor.node_buf[n]);
+   }
+   printf("\n");
+}
+#endif
+
+int IDs = 0;
+
+// inc editor->node_count, fill local node with data, then call node_push()
+static int
+node_editor_add(struct node_editor *editor, const char *name, struct nk_rect bounds,
+    struct nk_color col, int in_count, int out_count)
+{
+    struct node *node;
+    NK_ASSERT((nk_size)editor->node_count < NK_LEN(editor->node_buf));
+    printf("add node id:%d\n", IDs);
+    //printf("editor->node_count:%d\n", editor->node_count);
+//nodeEditorShow();
+    //node = &editor->node_buf[editor->node_count++];
+    node = malloc(sizeof(struct node));
+    editor->node_count++;
+    //printf("&node_buf[%d]:%p\n", editor->node_count-1, node);
+    node->ID = IDs;
+    strcpy(node->name, name);
+    //sprintf(node->name, "%d", node->ID);
+    node->bounds = bounds;
+    node->color = nk_rgb(255, 0, 0);
+    node->color = col;
+    node->input_count = in_count;
+    node->output_count = out_count;
+    //node->value = 0;
+    //node->values=NULL; // should init values too
+    node_editor_push(editor, node);
+    printf("id:%d node:%p\n", node->ID, node);
+    printf("editorPtr->node_buf[%d] node_count:%d\n", node->ID, editor->node_count);
+    IDs++;
+    //printf("next IDs:%d\n", IDs);
+    printf("\n");
+//nodeEditorShow();
+    return node->ID;
+}
+
+int linkShow(struct node_link* linkPtr) {
+   if (linkPtr==NULL) return 1;
+   printf("link input_id:%d\n", linkPtr->input_id);
+   printf("link input_slot:%d\n", linkPtr->input_slot);
+   printf("link output_id:%d\n", linkPtr->output_id);
+   printf("link output_slot:%d\n", linkPtr->output_slot);
+   printf("link prevPtr:%p\n", linkPtr->prev);
+   printf("link nextPtr:%p\n", linkPtr->next);
+   printf("\n");
+   return 0;
+}
+
+void nodeEditorLinkShow() {
+   printf("nodeEditor list links link_count:%d\n", nodeEditor.link_count);
+   struct node_link* linkPtr=nodeEditor.firstlink;
+   for (int n=0; n<nodeEditor.link_count; n++) {
+      printf("nodeEditorLink n:%d link:%p\n", n, linkPtr);
+      linkShow(linkPtr);
+      linkPtr=linkPtr->next;
+   }
+   printf("\n");
+}
+
+// add a link to linked list as last element
+void link_push(struct node_editor* editorPtr, struct node_link* linkPtr) {
+    if (!editorPtr->firstlink) { // first link
+        linkPtr->next = NULL;
+        linkPtr->prev = NULL;
+        editorPtr->firstlink = linkPtr;
+        editorPtr->lastlink = linkPtr;
+    } else { // next links
+        linkPtr->prev = editorPtr->lastlink;
+        if (editorPtr->lastlink) // can remove condition
+            editorPtr->lastlink->next = linkPtr;
+        linkPtr->next = NULL;
+        editorPtr->lastlink = linkPtr;
+    }
+} // void link_push(struct node_editor* editorPtr, struct node_link* linkPtr)
+
+// link two nodes
+static void
+node_editor_link(struct node_editor *editor, int in_id, int in_slot,
+    int out_id, int out_slot)
+{
+    struct node_link *link;
+    NK_ASSERT((nk_size)editor->link_count < NK_LEN(editor->links));
+    //link = &editor->links[editor->link_count++];
+    link = malloc(sizeof(struct node_link));
+    printf("add link:%p\n", link);
+    printf("inid:%d in:%d outid:%d out:%d\n", in_id, in_slot, out_id, out_slot);
+//nodeEditorLinkShow();
+    editor->link_count++;
+    link->input_id = in_id;
+    link->input_slot = in_slot;
+    link->output_id = out_id;
+    link->output_slot = out_slot;
+    link_push(editor, link);
+    printf("\n");
+//nodeEditorLinkShow();
+}
+
+// remove a node from the linked list
 static void
 node_editor_pop(struct node_editor *editor, struct node *node)
 {
-    if (node->next)
-        node->next->prev = node->prev;
-    if (node->prev)
-        node->prev->next = node->next;
-    if (editor->end == node)
+    if (node->next) // not last
+        node->next->prev = node->prev; // can be NULL if first
+    if (node->prev) // not first
+        node->prev->next = node->next; // can be NULL if last
+    if (editor->end == node) // last
         editor->end = node->prev;
-    if (editor->begin == node)
+    if (editor->begin == node) // first
         editor->begin = node->next;
-    node->next = NULL;
-    node->prev = NULL;
+    node->next = NULL; // just in case
+    node->prev = NULL; // just in case
+}
+
+// remove a link from the linked list
+void* link_pop(struct node_editor* editorPtr, struct node_link* linkPtr) {
+    if (linkPtr->next) // not last
+        linkPtr->next->prev = linkPtr->prev; // can be NULL if first
+    if (linkPtr->prev) // not first
+        linkPtr->prev->next = linkPtr->next; // can be NULL if last
+    if (editorPtr->lastlink == linkPtr) // last
+        editorPtr->lastlink = linkPtr->prev;
+    if (editorPtr->firstlink == linkPtr) // first
+        editorPtr->firstlink = linkPtr->next;
+    struct node_link* linkPrevPtr=linkPtr->prev;
+    linkPtr->next = NULL; // just in case
+    linkPtr->prev = NULL; // just in case
+    return linkPrevPtr;
+}
+
+void* node_editor_unlink(struct node_editor* editorPtr, struct node_link* linkPtr) {
+    struct node_link* linkPrevPtr;
+//nodeEditorLinkShow();
+   /*printf("link_count:%d\n", editorPtr->link_count);*/
+   if (editorPtr->link_count>0) {
+      linkPrevPtr=link_pop(editorPtr, linkPtr);
+      free(linkPtr);
+#if 0
+      int l;
+      for (l=link; l<editor->link_count-1; l++) {
+         editorPtr->links[l]=editorPtr->links[l+1];
+      }
+#endif
+      editorPtr->link_count--;
+   }
+//nodeEditorLinkShow();
+   return linkPrevPtr;
+}
+
+static void
+node_editor_delnode(struct node_editor* editorPtr, struct node* nodePtr) {
+   if (editorPtr->node_count>0) {
+      printf("delete node:%p\n", nodePtr);
+//nodeEditorShow();
+      // at first remove all linking and linked links to the node
+      struct node_link* linkPtr=editorPtr->firstlink;
+      for (int l=0; l<editorPtr->link_count; l++) {
+         if(linkPtr->output_id==nodePtr->ID ||
+            linkPtr->input_id==nodePtr->ID) {
+            printf("Remove l:%d link:%p\n", l, linkPtr);
+            linkPtr=node_editor_unlink(editorPtr, linkPtr);
+         }
+         //printf("l:%d link_count:%d\n", l, editorPtr->link_count);
+         printf("linkPtr:%p\n", linkPtr);
+         if (linkPtr!=NULL) linkPtr=linkPtr->next;
+         else {
+            printf("link removed\n");
+            break;
+         }
+      }
+      // remove from the linked list
+      node_editor_pop(editorPtr, nodePtr);
+      free(nodePtr);
+#if 0
+      int p; // search node position in node_buf[p]
+      for (p=0; p<editorPtr->node_count-1; p++) {
+         if (&editorPtr->node_buf[p]==nodePtr) break;
+      }
+      printf("editorPtr->node_buf[%d] node_count:%d\n", p, editorPtr->node_count);
+      // copy nodes back by one
+      int n;
+      for (n=p; n<editorPtr->node_count-1; n++) {
+         printf("n:%d\n", n);
+         printf("n:%d id:%d\n", n, editorPtr->node_buf[n].ID);
+         memcpy(&editorPtr->node_buf[n],&editorPtr->node_buf[n+1],sizeof(nodePtr));
+         printf("n:%d id:%d\n", n, editorPtr->node_buf[n].ID);
+         editorPtr->node_buf[n].ID--;
+         printf("n:%d id:%d\n", n, editorPtr->node_buf[n].ID);
+      }
+      // zero the node in node_buf[n] just in case
+      printf("zero node_buf[%d]\n", n);
+      memset(&editorPtr->node_buf[n], 0, sizeof(*nodePtr));
+#endif
+      editorPtr->node_count--;
+      //IDs--;
+      //printf("next IDs:%d\n", IDs);
+//nodeEditorShow();
+   }
+   return;
 }
 
 static struct node*
@@ -126,88 +352,13 @@ node_editor_find(struct node_editor *editor, int ID)
     return NULL;
 }
 
-static int
-node_editor_add(struct node_editor *editor, const char *name, struct nk_rect bounds,
-    struct nk_color col, int in_count, int out_count)
-{
-    static int IDs = 0;
-    struct node *node;
-    NK_ASSERT((nk_size)editor->node_count < NK_LEN(editor->node_buf));
-    //printf("editor->node_count:%d\n", editor->node_count);
-    node = &editor->node_buf[editor->node_count++];
-    //printf("&node_buf[%d]:%p\n", editor->node_count-1, node);
-    node->ID = IDs++;
-    strcpy(node->name, name);
-    node->bounds = bounds;
-    node->color = nk_rgb(255, 0, 0);
-    node->color = col;
-    node->input_count = in_count;
-    node->output_count = out_count;
-    node_editor_push(editor, node);
-    //node->value = 0;
-    //node->valuesPtr=NULL;
-    return node->ID;
-}
-
-static void
-node_editor_link(struct node_editor *editor, int in_id, int in_slot,
-    int out_id, int out_slot)
-{
-    struct node_link *link;
-    NK_ASSERT((nk_size)editor->link_count < NK_LEN(editor->links));
-    link = &editor->links[editor->link_count++];
-    link->input_id = in_id;
-    link->input_slot = in_slot;
-    link->output_id = out_id;
-    link->output_slot = out_slot;
-}
-
-static void
-node_editor_unlink(struct node_editor *editor, int link)
-{
-    /*printf("link_count:%d\n", editor->link_count);*/
-    if (editor->link_count>0) {
-      int l;
-      for (l=link; l<editor->link_count-1; l++) {
-         editor->links[l]=editor->links[l+1];
-      }
-      editor->link_count--;
-    }
-}
-
-static void
-node_editor_delnode(struct node_editor* editorPtr, struct node* nodePtr) {
-   if (editorPtr->node_count>1) {
-      // at first remove all linking and linked links to the node
-      for (int l=0; l<editorPtr->link_count; l++) {
-         if(editorPtr->links[l].output_id==nodePtr->ID ||
-            editorPtr->links[l].input_id==nodePtr->ID) {
-            printf("Unlink link:%d\n", l);
-            node_editor_unlink(editorPtr, l);
-         }
-      }
-      int p;
-      for (p=0; p<editorPtr->node_count-1; p++) {
-         if (&editorPtr->node_buf[p]==nodePtr) break;
-      }
-      printf("editorPtr->node_buf[%d]\n", p);
-      int n;
-      for (n=p; n<editorPtr->node_count-1; n++) {
-         editorPtr->node_buf[n]=editorPtr->node_buf[n+1];
-      }
-      node_editor_pop(editorPtr, nodePtr);
-      editorPtr->node_count--;
-   }
-   return;
-}
-
 static void
 node_editor_del(struct node_editor* editorPtr, int id) {
    int l;
    struct node* nodePtr;
-   if (editorPtr->node_count>1) {
+   if (editorPtr->node_count>0) {
       nodePtr=node_editor_find(editorPtr, id);
-      printf("id:%d node:%p\n", id, nodePtr);
+      printf("del id:%d node:%p\n", id, nodePtr);
       node_editor_delnode(editorPtr, nodePtr);
    }
    return;
@@ -219,7 +370,12 @@ node_editor_init(struct node_editor *editor)
     memset(editor, 0, sizeof(*editor));
     editor->begin = NULL;
     editor->end = NULL;
+    editor->firstlink = NULL;
+    editor->lastlink = NULL;
+    editor->node_count=0;
+    editor->link_count=0;
     editor->show_grid = nk_true;
+
     int id;
     nTy node;
     char name[5];
@@ -300,8 +456,7 @@ node_editor(struct nk_context *ctx)
             int inclick=0;
             int id;
             int inp;
-            int link;
-            struct node *it = nodedit->begin;
+            struct node_link* linkSavePtr;
             struct nk_rect size = nk_layout_space_bounds(ctx);
             struct nk_panel *node = 0;
 
@@ -317,6 +472,7 @@ node_editor(struct nk_context *ctx)
             }
 
             /* execute each node as a movable group */
+            struct node *it = nodedit->begin;
             while (it) {
                 /* calculate scrolled node window position and size */
                 nk_layout_space_push(ctx, nk_rect(it->bounds.x - nodedit->scrolling.x,
@@ -353,6 +509,9 @@ node_editor(struct nk_context *ctx)
                     static char Ii[6]="0.214"; static char Iadj[6]="0.005"; static char Io[6]="0.536";
                     static char Pi[6]="1.072"; static char Pd[6]="0.107"; static char Po[6]="0.965";
                     static char LDin[2]="1";
+                    //sprintf(it->values.refdes, "%d", it->ID);
+                    //strncpy(refdes, it->values.refdes, 6);
+                    strncpy(it->values.refdes, refdes, 6);
 //#if 0
                     snprintf(Vi, 6, "%g", it->values.Vi[0]);
                     snprintf(Ii, 6, "%g", it->values.Ii[0]);
@@ -476,10 +635,17 @@ node_editor(struct nk_context *ctx)
 
                         /* end linking process */
                         int incon=0; /* check if this input is already connected */
-                        int l;
-                        for (l=0; l<nodeEditor.link_count; l++) {
+#if 0
+                        for (int l=0; l<nodeEditor.link_count; l++) {
                            if (nodeEditor.links[l].output_id==it->ID &&
                                nodeEditor.links[l].output_slot==n) incon=1;
+                        }
+#endif
+                        struct node_link* linkPtr=nodeEditor.firstlink;
+                        for (int l=0; l<nodeEditor.link_count; l++) {
+                           if (linkPtr->output_id==it->ID &&
+                               linkPtr->output_slot==n) incon=1;
+                           linkPtr=linkPtr->next;
                         }
                         if (nk_input_is_mouse_released(in, NK_BUTTON_LEFT) &&
                             nk_input_is_mouse_hovering_rect(in, circle) &&
@@ -497,21 +663,23 @@ node_editor(struct nk_context *ctx)
                         rect.w = 100; rect.h = 30;
                         if(nk_input_has_mouse_click_down_in_rect(in, NK_BUTTON_LEFT, rect, nk_true)) {
                            inclick=1; /* check if click on output */
-                           for (l=0; l<nodeEditor.link_count; l++) {
-                              if (nodeEditor.links[l].output_id==it->ID &&
-                                  nodeEditor.links[l].output_slot==n) {
+                           struct node_link* linkPtr=nodeEditor.firstlink;
+                           for (int l=0; l<nodeEditor.link_count; l++) {
+                              if (linkPtr->output_id==it->ID &&
+                                  linkPtr->output_slot==n) {
                                  id=it->ID;
                                  inp=n;
-                                 link=l;
+                                 linkSavePtr=linkPtr;
                                  /*printf("clicked on link:%d\n", link);
                                  printf("node id:%d inp:%d\n", id, inp);*/
                               }
+                              linkPtr=linkPtr->next;
                            }
                         }
                     }
                 }
                 it = it->next;
-            }
+            } // while nodes
 
             /* reset linking connection */
             if (nodedit->linking.active && nk_input_is_mouse_released(in, NK_BUTTON_LEFT)) {
@@ -521,16 +689,22 @@ node_editor(struct nk_context *ctx)
             }
 
             /* draw each link */
+#if 0
             for (n = 0; n < nodedit->link_count; ++n) {
-                struct node_link *link = &nodedit->links[n];
-                struct node *ni = node_editor_find(nodedit, link->input_id);
-                struct node *no = node_editor_find(nodedit, link->output_id);
-                float spacei = node->bounds.h / (float)((ni->output_count) + 1);
-                float spaceo = node->bounds.h / (float)((no->input_count) + 1);
+                struct node_link *link = &nodedit->links[l];
+#endif
+            struct node_link* linkPtr=nodeEditor.firstlink;
+            for (int l=0; l<nodeEditor.link_count; l++) {
+                struct node *ni = node_editor_find(nodedit, linkPtr->input_id);
+                struct node *no = node_editor_find(nodedit, linkPtr->output_id);
+                float ocnt = (float)((ni->output_count) + 1);
+                float spacei = node->bounds.h / ocnt;
+                float icnt = (float)((no->input_count) + 1);
+                float spaceo = node->bounds.h / icnt;
                 struct nk_vec2 l0 = nk_layout_space_to_screen(ctx,
-                    nk_vec2(ni->bounds.x + ni->bounds.w, 3.0f + ni->bounds.y + spacei * (float)(link->input_slot+1)));
+                    nk_vec2(ni->bounds.x + ni->bounds.w, 3.0f + ni->bounds.y + spacei * (float)(linkPtr->input_slot+1)));
                 struct nk_vec2 l1 = nk_layout_space_to_screen(ctx,
-                    nk_vec2(no->bounds.x, 3.0f + no->bounds.y + spaceo * (float)(link->output_slot+1)));
+                    nk_vec2(no->bounds.x, 3.0f + no->bounds.y + spaceo * (float)(linkPtr->output_slot+1)));
 
                 l0.x -= nodedit->scrolling.x;
                 l0.y -= nodedit->scrolling.y;
@@ -538,6 +712,7 @@ node_editor(struct nk_context *ctx)
                 l1.y -= nodedit->scrolling.y;
                 nk_stroke_curve(canvas, l0.x, l0.y, l0.x + 50.0f, l0.y,
                     l1.x - 50.0f, l1.y, l1.x, l1.y, 1.0f, nk_rgb(255, 255, 255));
+                linkPtr=linkPtr->next;
             }
 
             if (updated) {
@@ -567,9 +742,9 @@ node_editor(struct nk_context *ctx)
                 nk_layout_row_dynamic(ctx, 25, 1);
                 if (nk_contextual_item_label(ctx, "Del Link", NK_TEXT_CENTERED) &&
                     inclick==1) {
-                    printf("delete link:%d\n", link);
+                    printf("delete link:%p\n", linkSavePtr);
                     printf("node id:%d inp:%d\n", id, inp);
-                    node_editor_unlink(nodedit, link);
+                    node_editor_unlink(nodedit, linkSavePtr);
                     printf("\n");
                 }
                 if (nk_contextual_item_label(ctx, "Del Node", NK_TEXT_CENTERED)) {
