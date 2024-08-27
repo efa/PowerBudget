@@ -482,7 +482,7 @@ int loadINI(char* graphFile, int* sectPtr) {
    }
    //printf("\n");
 
-   // 3rd pass to discover max depth and load input numbers
+   // 3rd pass to discover max depth and load input valuess
    //printf("3rd pass, discover max depth ...\n");
    int md=0;
    int ml=0;
@@ -753,7 +753,7 @@ int calcLR(nTy* from, double* Io) {
    return ret;
 } // int calcLR(nTy* node, double* Io)
 
-// may be an RS series, in case find all
+// may be many RS series, in case find all
 int calcRS(nTy* from, double Io, double* Vo) {
    int ret=0;
    //printf("from->name:%s\n", from->name);
@@ -813,6 +813,7 @@ int calcNodes() {
    // calc section
    printf("calc section ...\n");
    for (int s=0; s<sect; s++) { // INI sections = # nodes
+      if (&nPtr[s]==NULL) break;
       if (nPtr[s].type!=3) continue; // calc only LDx
       //printf("---\n");
       //printf("new s:%d node:'%s'\n", s, nPtr[s].name);
@@ -1090,10 +1091,10 @@ int saveINIres(nTy* nPtr, int nodes) {
    //printf("buffer:'\n%s\n'\n", bufferPtr);
    //int len=sizeof(bufferPtr);
    //printf("out:%d len:%d\n", out, len);
-   printf("Written out:%d Bytes\n", out);
    FILE* filePtr=openWrite(DefIniResFile);
    fwrite(bufferPtr, 1, out, filePtr);
    fclose(filePtr);
+   printf("Written out:%d Bytes\n", out);
    return 0;
 } // int saveINIres(nTy* nPtr, int nodes)
 

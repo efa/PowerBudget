@@ -16,6 +16,7 @@
 
 # Makefile used to build to Linux, MinGW/Win, macOS
 
+# Files
 SRCCLI = powerb.c powerbLib.c fileIo.c
 SRCGUI = powerbGui.c powerbLib.c fileIo.c
 SRC = $(SRCCLI) $(SRCGUI)

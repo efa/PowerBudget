@@ -137,10 +137,11 @@ int saveINI(void* nodedit) {
    out+=sprintf(bufferPtr+out, "[BOARD]\n");
    out+=sprintf(bufferPtr+out, "label=%s\n", "ES3");
    out+=sprintf(bufferPtr+out, "\n");
+   nodePtr=nodeditPtr->begin;
    for (int i=0; i<nodeditPtr->node_count; i++) {
       //out=0;
-      nodePtr=&nodeditPtr->node_buf[i];
       int type=nodePtr->values.type;
+      printf("type:%d\n", type);
       out+=sprintf(bufferPtr+out, "[%s]\n", nodePtr->name);
       out+=sprintf(bufferPtr+out, "label=%s\n", nodePtr->values.label);
       if (type!=0) {
@@ -174,14 +175,16 @@ int saveINI(void* nodedit) {
       }
       out+=sprintf(bufferPtr+out, "\n");
       //printf("buffer[%d]:'\n%s\n'\n", i, bufferPtr);
+      nodePtr=nodePtr->next;
    }
    //printf("\n");
    //printf("buffer:'\n%s\n'\n", bufferPtr);
    int len=sizeof(bufferPtr);
-   printf("out:%d len:%d\n", out, len);
+   //printf("out:%d len:%d\n", out, len);
    FILE* filePtr=openWrite(DefIniFile);
    fwrite(bufferPtr, 1, out, filePtr);
    fclose(filePtr);
+   printf("Written out:%d Bytes\n", out);
    return 0;
 } // int saveINI(void* nodedit)
 
@@ -228,7 +231,7 @@ int calcINI() {
 } // int calcINI()
 
 #if 0
-char* dtoa(double d) { // convert a double to an auto-allocated string. Rememeber to free the string
+char* dtoa(double d) { // convert a double to an auto-allocated string. Remember to free the string
    char** strPtrPtr;
    asprintf(strPtrPtr, "%g", d);
    return *strPtrPtr;

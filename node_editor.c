@@ -254,7 +254,7 @@ node_editor_pop(struct node_editor *editor, struct node *node)
 }
 
 // remove a link from the linked list
-void* link_pop(struct node_editor* editorPtr, struct node_link* linkPtr) {
+void link_pop(struct node_editor* editorPtr, struct node_link* linkPtr) {
     if (linkPtr->next) // not last
         linkPtr->next->prev = linkPtr->prev; // can be NULL if first
     if (linkPtr->prev) // not first
@@ -263,52 +263,55 @@ void* link_pop(struct node_editor* editorPtr, struct node_link* linkPtr) {
         editorPtr->lastlink = linkPtr->prev;
     if (editorPtr->firstlink == linkPtr) // first
         editorPtr->firstlink = linkPtr->next;
-    struct node_link* linkPrevPtr=linkPtr->prev;
     linkPtr->next = NULL; // just in case
     linkPtr->prev = NULL; // just in case
-    return linkPrevPtr;
 }
 
-void* node_editor_unlink(struct node_editor* editorPtr, struct node_link* linkPtr) {
+void node_editor_unlink(struct node_editor* editorPtr, struct node_link* linkPtr) {
     struct node_link* linkPrevPtr;
-//nodeEditorLinkShow();
+   //nodeEditorLinkShow();
    /*printf("link_count:%d\n", editorPtr->link_count);*/
    if (editorPtr->link_count>0) {
-      linkPrevPtr=link_pop(editorPtr, linkPtr);
+      link_pop(editorPtr, linkPtr);
       free(linkPtr);
-#if 0
-      int l;
-      for (l=link; l<editor->link_count-1; l++) {
-         editorPtr->links[l]=editorPtr->links[l+1];
-      }
-#endif
       editorPtr->link_count--;
    }
-//nodeEditorLinkShow();
-   return linkPrevPtr;
+   //nodeEditorLinkShow();
+}
+
+// remove all links going to or from a nome
+void node_unlink(struct node_editor* editorPtr, struct node* nodePtr) {
+   //nodeEditorLinkShow();
+   struct node_link* linkPtr;
+   int pass=0;
+   int found;
+   do {
+      found=0;
+      linkPtr=editorPtr->firstlink;
+      while (linkPtr) {
+         if(linkPtr->output_id==nodePtr->ID ||
+            linkPtr->input_id==nodePtr->ID) {
+            printf("Remove link:%p\n", linkPtr);
+            node_editor_unlink(editorPtr, linkPtr);
+            found=1;
+            break;
+         }
+         linkPtr=linkPtr->next;
+      }
+      pass++;
+   } while (found); // checked all links without find anyone connected to node
+   printf("found:%d pass:%d\n", found, pass);
+   printf("link_count:%d\n", editorPtr->link_count);
+   //nodeEditorLinkShow();
 }
 
 static void
 node_editor_delnode(struct node_editor* editorPtr, struct node* nodePtr) {
    if (editorPtr->node_count>0) {
       printf("delete node:%p\n", nodePtr);
-//nodeEditorShow();
+      //nodeEditorShow();
       // at first remove all linking and linked links to the node
-      struct node_link* linkPtr=editorPtr->firstlink;
-      for (int l=0; l<editorPtr->link_count; l++) {
-         if(linkPtr->output_id==nodePtr->ID ||
-            linkPtr->input_id==nodePtr->ID) {
-            printf("Remove l:%d link:%p\n", l, linkPtr);
-            linkPtr=node_editor_unlink(editorPtr, linkPtr);
-         }
-         //printf("l:%d link_count:%d\n", l, editorPtr->link_count);
-         printf("linkPtr:%p\n", linkPtr);
-         if (linkPtr!=NULL) linkPtr=linkPtr->next;
-         else {
-            printf("link removed\n");
-            break;
-         }
-      }
+      node_unlink(editorPtr, nodePtr);
       // remove from the linked list
       node_editor_pop(editorPtr, nodePtr);
       free(nodePtr);
@@ -335,7 +338,7 @@ node_editor_delnode(struct node_editor* editorPtr, struct node* nodePtr) {
       editorPtr->node_count--;
       //IDs--;
       //printf("next IDs:%d\n", IDs);
-//nodeEditorShow();
+      //nodeEditorShow();
    }
    return;
 }
@@ -379,13 +382,14 @@ node_editor_init(struct node_editor *editor)
     int id;
     nTy node;
     char name[5];
-    strcpy(name, "IN ");
+
+    strcpy(name, "IN");
     id=node_editor_add(editor, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=0; strcpy(node.label,"IN"); node.Vo=5;
+    strcpy(node.label, name); node.type=0; node.Vo=5;
     fillNodeData(id, &node);
 
-#if 0
+//#if 0
     strcpy(name, "SR1");
     id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
     initNodeData(&node);
@@ -407,7 +411,7 @@ node_editor_init(struct node_editor *editor)
     strcpy(name, "LD1");
     id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 3, 0);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=3; strcpy(node.label,"GR718"); strcpy(node.refdes,"U20");
+    strcpy(node.label, name); node.type=3; strcpy(node.label,"SpW"); strcpy(node.refdes,"U20");
     strcpy(node.in[0],"SR1"); node.Ii[0]=0.528; strcpy(node.in[1],"SR1"); node.Ii[1]=0.008; strcpy(node.in[2],"LR2"); node.Ii[2]=0.317;
     fillNodeData(id, &node);
     strcpy(name, "LD2");
@@ -423,7 +427,7 @@ node_editor_init(struct node_editor *editor)
     node_editor_link(editor, 1, 0, 4, 1);
     node_editor_link(editor, 3, 0, 4, 2);
     node_editor_link(editor, 3, 0, 5, 0);
-#endif
+//#endif
 }
 
 int nodeclick=0;
@@ -635,12 +639,6 @@ node_editor(struct nk_context *ctx)
 
                         /* end linking process */
                         int incon=0; /* check if this input is already connected */
-#if 0
-                        for (int l=0; l<nodeEditor.link_count; l++) {
-                           if (nodeEditor.links[l].output_id==it->ID &&
-                               nodeEditor.links[l].output_slot==n) incon=1;
-                        }
-#endif
                         struct node_link* linkPtr=nodeEditor.firstlink;
                         for (int l=0; l<nodeEditor.link_count; l++) {
                            if (linkPtr->output_id==it->ID &&
@@ -689,18 +687,14 @@ node_editor(struct nk_context *ctx)
             }
 
             /* draw each link */
-#if 0
-            for (n = 0; n < nodedit->link_count; ++n) {
-                struct node_link *link = &nodedit->links[l];
-#endif
             struct node_link* linkPtr=nodeEditor.firstlink;
             for (int l=0; l<nodeEditor.link_count; l++) {
                 struct node *ni = node_editor_find(nodedit, linkPtr->input_id);
+                //printf("ni:%p id:%d\n", ni, linkPtr->input_id);
                 struct node *no = node_editor_find(nodedit, linkPtr->output_id);
-                float ocnt = (float)((ni->output_count) + 1);
-                float spacei = node->bounds.h / ocnt;
-                float icnt = (float)((no->input_count) + 1);
-                float spaceo = node->bounds.h / icnt;
+                //printf("no:%p id:%d\n", no, linkPtr->output_id);
+                float spacei = node->bounds.h / (float)((ni->output_count) + 1);
+                float spaceo = node->bounds.h / (float)((no->input_count) + 1);
                 struct nk_vec2 l0 = nk_layout_space_to_screen(ctx,
                     nk_vec2(ni->bounds.x + ni->bounds.w, 3.0f + ni->bounds.y + spacei * (float)(linkPtr->input_slot+1)));
                 struct nk_vec2 l1 = nk_layout_space_to_screen(ctx,
@@ -770,6 +764,8 @@ node_editor(struct nk_context *ctx)
                     saveINI(nodedit);
                 }
                 if (nk_contextual_item_label(ctx, "Calc INI", NK_TEXT_CENTERED)) {
+                    printf("save INI file\n");
+                    saveINI(nodedit);
                     printf("calc INI file\n");
                     calcINI();
                 }

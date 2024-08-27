@@ -52,6 +52,12 @@ int main(int argNum, char* argV[]) {
 
    int sect;
    ret=loadINI(graphFile, &sect);
+   if (ret!=0) {
+      printf("loadINI returned not OK:%d\n", ret);
+      ret=freeMem();
+      free(graphFile);
+      return -1;
+   }
 
    ret=calcNodes();
 
