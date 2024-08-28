@@ -138,22 +138,26 @@ int saveINI(void* nodedit) {
    out+=sprintf(bufferPtr+out, "label=%s\n", "ES3");
    out+=sprintf(bufferPtr+out, "\n");
    nodePtr=nodeditPtr->begin;
-   for (int i=0; i<nodeditPtr->node_count; i++) {
-      //out=0;
+   for (int n=0; n<nodeditPtr->node_count; n++) {
       int type=nodePtr->values.type;
-      printf("type:%d\n", type);
+      //printf("type:%d\n", type);
       out+=sprintf(bufferPtr+out, "[%s]\n", nodePtr->name);
       out+=sprintf(bufferPtr+out, "label=%s\n", nodePtr->values.label);
       if (type!=0) {
          out+=sprintf(bufferPtr+out, "refdes=%s\n", nodePtr->values.refdes);
-         out+=sprintf(bufferPtr+out, "f0=%s\n", nodePtr->values.in[0]);
       }
       if (type==3) { // LDx
-         out+=sprintf(bufferPtr+out, "V0=%g\n", nodePtr->values.Vi[0]);
-         out+=sprintf(bufferPtr+out, "I0=%g\n", nodePtr->values.Ii[0]);
-         out+=sprintf(bufferPtr+out, "R0=%g\n", nodePtr->values.R[0]);
-         out+=sprintf(bufferPtr+out, "P0=%g\n", nodePtr->values.Pi[0]);
-      } else if (type!=0) { // IN
+         for (int i=0; i<MaxIns; i++) {
+            //printf("n:%d i:%d\n", n, i);
+            if (nodePtr->values.in[i][0]=='\0') continue; // LDx can have more than one
+            out+=sprintf(bufferPtr+out, "f%d=%s\n", i, nodePtr->values.in[i]);
+            out+=sprintf(bufferPtr+out, "V%d=%g\n", i, nodePtr->values.Vi[i]);
+            out+=sprintf(bufferPtr+out, "I%d=%g\n", i, nodePtr->values.Ii[i]);
+            out+=sprintf(bufferPtr+out, "R%d=%g\n", i, nodePtr->values.R[i]);
+            out+=sprintf(bufferPtr+out, "P%d=%g\n", i, nodePtr->values.Pi[i]);
+         }
+      } else if (type!=-1 && type!=0) { // no BOARD and IN and LDx
+         out+=sprintf(bufferPtr+out, "f0=%s\n", nodePtr->values.in[0]);
          out+=sprintf(bufferPtr+out, "Vi=%g\n", nodePtr->values.Vi[0]);
          out+=sprintf(bufferPtr+out, "Ii=%g\n", nodePtr->values.Ii[0]);
          out+=sprintf(bufferPtr+out, "Pi=%g\n", nodePtr->values.Pi[0]);
@@ -174,7 +178,7 @@ int saveINI(void* nodedit) {
          out+=sprintf(bufferPtr+out, "Po=%g\n", nodePtr->values.Po);
       }
       out+=sprintf(bufferPtr+out, "\n");
-      //printf("buffer[%d]:'\n%s\n'\n", i, bufferPtr);
+      //printf("buffer[%d]:'\n%s\n'\n", n, bufferPtr);
       nodePtr=nodePtr->next;
    }
    //printf("\n");

@@ -43,7 +43,7 @@ int main(int argNum, char* argV[]) {
    } else { // default fileName
       char fileName[]=DefIniFile; // "powerb.ini"
       int len=strlen(fileName);
-      printf("len:%d\n", len);
+      //printf("len:%d\n", len);
       graphFile=malloc(len+1); // add NULL
       graphFile[0]='\0';
       strcpy(graphFile, fileName);

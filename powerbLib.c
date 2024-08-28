@@ -80,7 +80,7 @@ int loadINI(char* graphFile, int* sectPtr) {
       printf("Missing LD1 section in file. Quit\n");
       return -1;
    }
-   printf("BOARD file:'%s'\n", iniparser_getstring(graphPtr, "BOARD:label", ""));
+   printf("BOARD in file:'%s'\n", iniparser_getstring(graphPtr, "BOARD:label", ""));
    printf("Input in file:%d\n", in);
    printf("Switching Regulators in file:%d\n", sr);
    printf("Linear Regulators in file:%d\n", lr);
@@ -586,7 +586,9 @@ int loadINI(char* graphFile, int* sectPtr) {
 
    //printf("fill matrix data\n");
    for (int s=0; s<sect; s++) { // INI sections = # nodes
+      if (nPtr[s].type==-1) continue;
       //printf("node:'%- 4s'\n", nPtr[s].name);
+      //printf("nPtr[s].col:%d nPtr[s].row:%d\n", nPtr[s].col, nPtr[s].row);
       node[nPtr[s].col][nPtr[s].row]=&nPtr[s]; // fill matrix
       if (nPtr[s].type==3) { // LOAD can have more than 1 input
          for (int i=1; i<MaxIns; i++) { // for every LOAD input
@@ -599,7 +601,7 @@ int loadINI(char* graphFile, int* sectPtr) {
    }
    //printf("\n");
 
-//#if 0
+#if 0
    printf("show matrix data\n");
    for (int r=0; r<rows; r++) {
       for (int c=0; c<cols; c++) {
@@ -608,7 +610,7 @@ int loadINI(char* graphFile, int* sectPtr) {
       }
    }
    printf("\n");
-//#endif
+#endif
 
    printf("show graph matrix\n");
    printf("rows\\cols|");
