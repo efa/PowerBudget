@@ -506,38 +506,39 @@ node_editor(struct nk_context *ctx)
                     /*nk_layout_row_dynamic(ctx, 19, 7);*/
                     /*nk_layout_set_min_row_height(ctx, 30.);*/
                     /*nk_button_color(ctx, it->color);*/
-                    enum options {LR,SR};
-                    static int option_left;
-                    static char refdes[7]="U1"; static char yeld[6]="0.9";   static char R0[6]="93";
-                    static char Vi[6]="5.0";   static char DV[6]="3.2";     static char Vo[6]="1.8";
-                    static char Ii[6]="0.214"; static char Iadj[6]="0.005"; static char Io[6]="0.536";
-                    static char Pi[6]="1.072"; static char Pd[6]="0.107"; static char Po[6]="0.965";
-                    static char LDin[2]="1";
+                    enum {LR,SR};
+                    int voltReg_radio;
+
+                    char refdes[7]="U1"; char yeld[6]="0.9";   char R0[6]="93";
+                    char Vi[6]="5.0";    char DV[6]="3.2";     char Vo[6]="1.8";
+                    char Ii[6]="0.214";  char Iadj[6]="0.005"; char Io[6]="0.536";
+                    char Pi[6]="1.072";  char Pd[6]="0.107";   char Po[6]="0.965";
                     //sprintf(it->values.refdes, "%d", it->ID);
-                    //strncpy(refdes, it->values.refdes, 6);
-                    strncpy(it->values.refdes, refdes, 6);
+                    //strncpy(it->values.refdes, refdes, 6);
 //#if 0
+                    strncpy(refdes, it->values.refdes, 6);
+                    // convert from double to string
                     snprintf(Vi, 6, "%g", it->values.Vi[0]);
                     snprintf(Ii, 6, "%g", it->values.Ii[0]);
                     snprintf(R0, 6, "%g", it->values.R[0]);
                     snprintf(Pi, 6, "%g", it->values.Pi[0]);
-
                     snprintf(yeld, 6, "%g", it->values.eta);
                     snprintf(Iadj, 6, "%g", it->values.Iadj);
                     snprintf(DV, 6, "%g", it->values.DV);
                     snprintf(Pd, 6, "%g", it->values.Pd);
-
                     snprintf(Vo, 6, "%g", it->values.Vo);
                     snprintf(Io, 6, "%g", it->values.Io);
                     snprintf(Po, 6, "%g", it->values.Po);
 //#endif
+                    static char LDin[2]="1";
+                    nTy* nd=&it->values; // so can use nd-> istead of it->values.
                     if (!strncasecmp(it->name, "LD", 2)) { // Loads
                        const float size0[] = {35, 80, 35};
                        nk_layout_row(ctx, NK_STATIC, 20, 3, size0);
-                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, it->values.refdes, 7, 0); nk_label(ctx, "Inputs:", NK_TEXT_RIGHT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, LDin, 2, nk_filter_decimal);
+                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, refdes, 7, 0); nk_label(ctx, "Inputs:", NK_TEXT_RIGHT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, LDin, 2, nk_filter_decimal);
                        const float size[] = {50, 15, 30, 50, 15, 50, 10};
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
-                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Vi, 6, nk_filter_float); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, "", NK_TEXT_RIGHT);      nk_label(ctx, "", NK_TEXT_RIGHT);                                           nk_label(ctx, "", NK_TEXT_RIGHT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, R0, 6, nk_filter_float); nk_label(ctx, "Ohm", NK_TEXT_LEFT); /* Ω */
+                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Vi, 6, nk_filter_float); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, "", NK_TEXT_RIGHT);      nk_label(ctx, "", NK_TEXT_RIGHT);                                           nk_label(ctx, "", NK_TEXT_RIGHT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, R0, 6, nk_filter_float); nk_label(ctx, "ΩOhm", NK_TEXT_LEFT); /* Ω */
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
                        nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Ii, 6, nk_filter_float); nk_label(ctx, "A", NK_TEXT_LEFT); nk_label(ctx, "Pdis:", NK_TEXT_RIGHT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Pd, 6, nk_filter_float); nk_label(ctx, "W", NK_TEXT_LEFT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Pi, 6, nk_filter_float); nk_label(ctx, "W", NK_TEXT_LEFT);
                     } else if (!strncasecmp(it->name, "IN", 2)) { // IN
@@ -555,14 +556,15 @@ node_editor(struct nk_context *ctx)
                        const float size0[] = {35, 55, 60, 80};
                        nk_layout_row(ctx, NK_STATIC, 20, 4, size0);
                        if (!strncasecmp(it->name, "LR", 2)) { // Linear
-                          option_left=LR;
+                          voltReg_radio=LR;
                        } else { // Switching
-                          option_left=SR;
+                          voltReg_radio=SR;
                        }
-                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, it->values.refdes, 7, 0); nk_label(ctx, "VoltReg:", NK_TEXT_LEFT); option_left = nk_option_label(ctx, "Linear", option_left == LR) ? LR : option_left; option_left = nk_option_label(ctx, "Switching", option_left == SR) ? SR : option_left;
+                       //nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, refdes, 7, 0); nk_label(ctx, "VoltReg:", NK_TEXT_LEFT); voltReg_radio = nk_option_label(ctx, "Linear", voltReg_radio == LR) ? LR : voltReg_radio; voltReg_radio = nk_option_label(ctx, "Switching", voltReg_radio == SR) ? SR : voltReg_radio;
+                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, refdes, 7, 0); nk_label(ctx, "VoltReg:", NK_TEXT_LEFT); if (nk_option_label(ctx, "Linear", voltReg_radio == LR)) voltReg_radio=LR; if (nk_option_label(ctx, "Switching", voltReg_radio == SR)) voltReg_radio=SR;
                        const float size[] = {50, 15, 30, 50, 15, 50, 10};
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
-                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Vi, 6, nk_filter_float); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, "DV:", NK_TEXT_RIGHT);   nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, DV, 6, nk_filter_float);   nk_label(ctx, "V", NK_TEXT_LEFT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Vo, 6, nk_filter_float); nk_label(ctx, "V", NK_TEXT_LEFT);
+                       nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Vi, 6, nk_filter_float); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, "ΔDV:", NK_TEXT_RIGHT);   nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, DV, 6, nk_filter_float);   nk_label(ctx, "V", NK_TEXT_LEFT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Vo, 6, nk_filter_float); nk_label(ctx, "V", NK_TEXT_LEFT);
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
                        if (!strncasecmp(it->name, "LR", 2)) { // Linear
                        nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Ii, 6, nk_filter_float); nk_label(ctx, "A", NK_TEXT_LEFT); nk_label(ctx, "Iadj:", NK_TEXT_RIGHT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Iadj, 6, nk_filter_float); nk_label(ctx, "A", NK_TEXT_LEFT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Io, 6, nk_filter_float); nk_label(ctx, "A", NK_TEXT_LEFT);
@@ -571,8 +573,24 @@ node_editor(struct nk_context *ctx)
                        }
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
                        nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Pi, 6, nk_filter_float); nk_label(ctx, "W", NK_TEXT_LEFT); nk_label(ctx, "Pdis:", NK_TEXT_RIGHT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Pd, 6, nk_filter_float);   nk_label(ctx, "W", NK_TEXT_LEFT); nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, Po, 6, nk_filter_float); nk_label(ctx, "W", NK_TEXT_LEFT);
+                       if (voltReg_radio == LR) strcpy(it->name, "LR");
+                       if (voltReg_radio == SR) strcpy(it->name, "SR");
                     }
 
+                    strncpy(it->values.refdes, refdes, 6);
+                    // convert back from string to double
+                    char* endPtr;
+                    it->values.Vi[0] = strtod(Vi, &endPtr);
+                    it->values.Ii[0] = strtod(Ii, &endPtr);
+                    it->values.R[0] = strtod(R0, &endPtr);
+                    it->values.Pi[0] = strtod(Pi, &endPtr);
+                    it->values.eta = strtod(yeld, &endPtr);
+                    it->values.Iadj = strtod(Iadj, &endPtr);
+                    it->values.DV = strtod(DV, &endPtr);
+                    it->values.Pd = strtod(Pd, &endPtr);
+                    it->values.Vo = strtod(Vo, &endPtr);
+                    it->values.Io = strtod(Io, &endPtr);
+                    it->values.Po = strtod(Po, &endPtr);
 #if 0
                     nk_text(ctx, text, 5, NK_TEXT_LEFT);
                     const char label[]="inputs";

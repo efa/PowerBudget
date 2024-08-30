@@ -248,6 +248,27 @@ char* mystrcat(char* dest, char* src) {
 }
 #endif
 
+const nk_rune nk_font_mathematical_glyph_ranges[] = {
+  0x0020, 0x00FF,
+  0x0370, 0x03FF, // Greek and Coptic
+  0x2200, 0x22FF, // Mathematical Operators
+  0
+};
+
+#if 0
+NK_API const nk_rune*
+nk_font_mathematical_glyph_ranges(void)
+{
+    NK_STORAGE const nk_rune ranges[] = {
+        0x0020, 0x00FF,
+        0x0370, 0x03FF, // Greek and Coptic
+        0x2200, 0x22FF, // Mathematical Operators
+        0
+    };
+    return ranges;
+}
+#endif
+
 /* ===============================================================
  *
  *                          DEMO
@@ -322,7 +343,9 @@ main(int argc, char *argv[])
 
         /* set up the font atlas and add desired font; note that font sizes are
          * multiplied by font_scale to produce better results at higher DPIs */
+        config.range = &nk_font_mathematical_glyph_ranges[0];
         nk_sdl_font_stash_begin(&atlas);
+        //nk_font_atlas_init_default(atlas);
         font = nk_font_atlas_add_default(atlas, 13 * font_scale, &config);
         /*font = nk_font_atlas_add_from_file(atlas, "../../../extra_font/DroidSans.ttf", 14 * font_scale, &config);*/
         /*font = nk_font_atlas_add_from_file(atlas, "../../../extra_font/Roboto-Regular.ttf", 16 * font_scale, &config);*/
