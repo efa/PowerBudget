@@ -48,7 +48,7 @@ int main(int argNum, char* argV[]) {
       graphFile[0]='\0';
       strcpy(graphFile, fileName);
    }
-   printf("INI file:'%s'\n", graphFile);
+   //printf("INI file:'%s'\n", graphFile);
 
    int sect;
    ret=loadINI(graphFile, &sect);

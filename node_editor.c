@@ -151,7 +151,7 @@ node_editor_add(struct node_editor *editor, const char *name, struct nk_rect bou
     struct nk_color col, int in_count, int out_count)
 {
     struct node *node;
-    NK_ASSERT((nk_size)editor->node_count < NK_LEN(editor->node_buf));
+    //NK_ASSERT((nk_size)editor->node_count < NK_LEN(editor->node_buf));
     printf("add node id:%d\n", IDs);
     //printf("editor->node_count:%d\n", editor->node_count);
 //nodeEditorShow();
@@ -224,7 +224,7 @@ node_editor_link(struct node_editor *editor, int in_id, int in_slot,
     int out_id, int out_slot)
 {
     struct node_link *link;
-    NK_ASSERT((nk_size)editor->link_count < NK_LEN(editor->links));
+    //NK_ASSERT((nk_size)editor->link_count < NK_LEN(editor->links));
     //link = &editor->links[editor->link_count++];
     link = malloc(sizeof(struct node_link));
     printf("add link:%p\n", link);
@@ -389,38 +389,38 @@ node_editor_init(struct node_editor *editor)
     strcpy(name, "IN");
     id=node_editor_add(editor, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=0; node.Vo=5;
+    strcpy(node.name, name); node.type=0; strcpy(node.label, name); node.Vo=5;
     fillNodeData(id, &node);
 
 //#if 0
     strcpy(name, "SR1");
     id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=1; strcpy(node.label,"Buck"); strcpy(node.refdes,"U14");
+    strcpy(node.name, name); node.type=1; strcpy(node.label,"Buck"); strcpy(node.refdes,"U14");
     strcpy(node.in[0],"IN"); node.yeld=0.9; node.Vo=1.8;
     fillNodeData(id, &node);
     strcpy(name, "LR1");
     id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=2; strcpy(node.label,"LDO1"); strcpy(node.refdes,"U12");
+    strcpy(node.name, name); node.type=2; strcpy(node.label,"LDO1"); strcpy(node.refdes,"U12");
     strcpy(node.in[0],"IN"); node.Iadj=0.005; node.Vo=3.6;
     fillNodeData(id, &node);
     strcpy(name, "LR2");
     id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=2; strcpy(node.label,"LDO2"); strcpy(node.refdes,"U13");
-    strcpy(node.in[0],"LR1"); node.Iadj=0.005; node.Vo=3.3;
+    strcpy(node.name, name); node.type=2; strcpy(node.label,"LDO2"); strcpy(node.refdes,"U13");
+    strcpy(node.in[0],"LR1"); node.Iadj=0.005; node.Vo=3.3L;
     fillNodeData(id, &node);
     strcpy(name, "LD1");
     id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 3, 0);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=3; strcpy(node.label,"SpW"); strcpy(node.refdes,"U20");
+    strcpy(node.name, name); node.type=3; strcpy(node.label,"SpW"); strcpy(node.refdes,"U20");
     strcpy(node.in[0],"SR1"); node.Ii[0]=0.528; strcpy(node.in[1],"SR1"); node.Ii[1]=0.008; strcpy(node.in[2],"LR2"); node.Ii[2]=0.317;
     fillNodeData(id, &node);
     strcpy(name, "LD2");
     id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 1, 0);
     initNodeData(&node);
-    strcpy(node.label, name); node.type=3; strcpy(node.label,"LVDS"); strcpy(node.refdes,"U6");
+    strcpy(node.name, name); node.type=3; strcpy(node.label,"LVDS"); strcpy(node.refdes,"U6");
     strcpy(node.in[0],"LR2"); node.Ii[0]=0.0354;
     fillNodeData(id, &node);
     node_editor_link(editor, 0, 0, 1, 0);
@@ -550,7 +550,7 @@ node_editor(struct nk_context *ctx)
 //                       const float size[] = {50, 15, 30, 50, 15, 50, 10};
                        const float size[] = {EFW, 15, 30, EFW, 15, EFW, 10};
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
-                       nk_property_double(ctx, "###n", 0, &nd->Vi[0], DBL_MAX, STEP, SPP); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, "", NK_TEXT_RIGHT);      nk_label(ctx, "", NK_TEXT_RIGHT);                                nk_label(ctx, "", NK_TEXT_RIGHT); nk_property_double(ctx, "###n", 0, &nd->R[0], DBL_MAX, STEP, SPP);  nk_label(ctx, "ΩOhm", NK_TEXT_LEFT); /* Ω */
+                       nk_property_double(ctx, "###n", 0, &nd->Vi[0], DBL_MAX, STEP, SPP); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, "", NK_TEXT_RIGHT);      nk_label(ctx, "", NK_TEXT_RIGHT);                                nk_label(ctx, "", NK_TEXT_RIGHT); nk_property_double(ctx, "###n", 0, &nd->R[0], DBL_MAX, STEP, SPP);  nk_label(ctx, u8"ΩOhm", NK_TEXT_LEFT); /* Ω */
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
                        nk_property_double(ctx, "###n", 0, &nd->Ii[0], DBL_MAX, STEP, SPP); nk_label(ctx, "A", NK_TEXT_LEFT); nk_label(ctx, "Pdis:", NK_TEXT_RIGHT); nk_property_double(ctx, "###n", 0, &nd->Pd, DBL_MAX, STEP, SPP); nk_label(ctx, "W", NK_TEXT_LEFT); nk_property_double(ctx, "###n", 0, &nd->Pi[0], DBL_MAX, STEP, SPP); nk_label(ctx, "W", NK_TEXT_LEFT);
                     } else if (!strncasecmp(it->name, "IN", 2)) { // IN
@@ -577,7 +577,7 @@ node_editor(struct nk_context *ctx)
 //                       const float size[] = {50, 15, 30, 50, 15, 50, 10};
                        const float size[] = {EFW, 15, 30, EFW, 15, EFW, 10};
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
-                       nk_property_double(ctx, "###n", 0, &nd->Vi[0], DBL_MAX, STEP, SPP); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, "ΔDV:", NK_TEXT_RIGHT);  nk_property_double(ctx, "###n", 0, &nd->DV, DBL_MAX, STEP, SPP);   nk_label(ctx, "V", NK_TEXT_LEFT); nk_property_double(ctx, "###n", 0, &nd->Vo, DBL_MAX, STEP, SPP); nk_label(ctx, "V", NK_TEXT_LEFT);
+                       nk_property_double(ctx, "###n", 0, &nd->Vi[0], DBL_MAX, STEP, SPP); nk_label(ctx, "V", NK_TEXT_LEFT); nk_label(ctx, u8"ΔDV:", NK_TEXT_RIGHT);  nk_property_double(ctx, "###n", 0, &nd->DV, DBL_MAX, STEP, SPP);   nk_label(ctx, "V", NK_TEXT_LEFT); nk_property_double(ctx, "###n", 0, &nd->Vo, DBL_MAX, STEP, SPP); nk_label(ctx, "V", NK_TEXT_LEFT);
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
                        if (!strncasecmp(it->name, "LR", 2)) { // Linear
                        nk_property_double(ctx, "###n", 0, &nd->Ii[0], DBL_MAX, STEP, SPP); nk_label(ctx, "A", NK_TEXT_LEFT); nk_label(ctx, "Iadj:", NK_TEXT_RIGHT); nk_property_double(ctx, "###n", 0, &nd->Iadj, DBL_MAX, STEP, SPP); nk_label(ctx, "A", NK_TEXT_LEFT); nk_property_double(ctx, "###n", 0, &nd->Io, DBL_MAX, STEP, SPP); nk_label(ctx, "A", NK_TEXT_LEFT);

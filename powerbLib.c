@@ -80,6 +80,7 @@ int loadINI(char* graphFile, int* sectPtr) {
       printf("Missing LD1 section in file. Quit\n");
       return -1;
    }
+   printf("INI file:'%s'\n", graphFile);
    printf("BOARD in file:'%s'\n", iniparser_getstring(graphPtr, "BOARD:label", ""));
    printf("Input in file:%d\n", in);
    printf("Switching Regulators in file:%d\n", sr);
@@ -1039,7 +1040,7 @@ int showStructData() {
 
 int saveINIres(nTy* nPtr, int nodes) {
    char bufferPtr[5000]="";
-   printf("Writing nodes:%d to INIres ...\n", nodes);
+   printf("Writing nodes:%d to INIres file:'%s'\n", nodes, DefIniResFile);
    int out=0;
    //out+=sprintf(bufferPtr+out, "[BOARD]\n");
    //out+=sprintf(bufferPtr+out, "label=%s\n", "ES3");

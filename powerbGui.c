@@ -143,7 +143,7 @@ int saveINI(void* nodedit) {
    for (int n=0; n<nodeditPtr->node_count; n++) {
       int type=nodePtr->values.type;
       //printf("type:%d\n", type);
-      out+=sprintf(bufferPtr+out, "[%s]\n", nodePtr->name);
+      out+=sprintf(bufferPtr+out, "[%s]\n", nodePtr->values.name);
       out+=sprintf(bufferPtr+out, "label=%s\n", nodePtr->values.label);
       if (type!=0) {
          out+=sprintf(bufferPtr+out, "refdes=%s\n", nodePtr->values.refdes);
@@ -198,12 +198,26 @@ int loadINIres(void* nodedit) {
    struct node_editor* nodeditPtr;
    nodeditPtr=nodedit;
    struct node* nodePtr;
-return 0;
    // at first remove all existing nodes and links
-   for (int n=0; n<nodeditPtr->node_count; n++) {
-      nodePtr=&nodeditPtr->node_buf[n];
-      node_editor_delnode(nodeditPtr, nodePtr);
-   }
+   printf("removing current nodes ...\n");
+   int pass=0;
+   int found;
+   do {
+      found=0;
+      nodePtr=nodeditPtr->begin;
+      if (nodePtr) {
+         printf("Remove node:%p\n", nodePtr);
+         node_editor_delnode(nodeditPtr, nodePtr);
+         found=1;
+         //nodePtr=nodePtr->next;
+      }
+      pass++;
+   } while (found); // removed all nodes
+   printf("found:%d pass:%d\n", found, pass);
+   printf("cleared\n");
+   printf("\n");
+
+   printf("init ...\n");
    node_editor_init(&nodeEditor);
    nodeEditor.initialized = 1;
    int id;
@@ -212,8 +226,10 @@ return 0;
 
    int ret;
    int sect;
+   printf("loading ...\n");
    ret=loadINI(DefIniResFile, &sect);
-
+   printf("loaded\n");
+return 0;
    for (int n=0; n<sect; n++) {
       strcpy(name, "IN ");
       id=node_editor_add(nodeditPtr, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
@@ -229,7 +245,7 @@ return 0;
       fillNodeData(id, &node);
    }
    return 0;
-}
+} // int loadINIres(void* nodedit)
 
 int calcINI() {
    system("powerb");
