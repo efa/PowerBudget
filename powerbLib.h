@@ -38,7 +38,7 @@ typedef struct nTy { char name[5]; // "IN", "SRxx", "LRxx", "LDxx"
                      double Ii[MaxIns];
                      double R[MaxIns];
                      double Pi[MaxIns];
-                     double eta;
+                     double yeld;
                      double Iadj;
                      double DV;
                      double Pd;

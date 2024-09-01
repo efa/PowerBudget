@@ -112,7 +112,7 @@ int loadINI(char* graphFile, int* sectPtr) {
             nPtr[s].Pi[i]=0;
             nPtr[s].R[i]=0;
          }
-         nPtr[s].eta=0;
+         nPtr[s].yeld=0;
          nPtr[s].Iadj=0;
          nPtr[s].DV=0;
          nPtr[s].Pd=0;
@@ -140,7 +140,7 @@ int loadINI(char* graphFile, int* sectPtr) {
             nPtr[s].Pi[i]=0;
             nPtr[s].R[i]=0;
          }
-         nPtr[s].eta=0;
+         nPtr[s].yeld=0;
          nPtr[s].Iadj=0;
          nPtr[s].DV=0;
          nPtr[s].Pd=0;
@@ -204,7 +204,7 @@ int loadINI(char* graphFile, int* sectPtr) {
             nPtr[s].R[i]=0;
          }
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":n");
-         nPtr[s].eta=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr[s].yeld=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          nPtr[s].Iadj=0;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":DV");
          nPtr[s].DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
@@ -265,7 +265,7 @@ int loadINI(char* graphFile, int* sectPtr) {
             nPtr[s].Pi[i]=0;
             nPtr[s].R[i]=0;
          }
-         nPtr[s].eta=0;
+         nPtr[s].yeld=0;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Iadj");
          nPtr[s].Iadj=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":DV");
@@ -273,7 +273,7 @@ int loadINI(char* graphFile, int* sectPtr) {
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Pd");
          nPtr[s].Pd=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":n");
-         nPtr[s].eta=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr[s].yeld=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Vo");
          nPtr[s].Vo=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Io");
@@ -329,7 +329,7 @@ int loadINI(char* graphFile, int* sectPtr) {
             nPtr[s].Pi[i]=0;
             nPtr[s].R[i]=0;
          }
-         nPtr[s].eta=0;
+         nPtr[s].yeld=0;
          nPtr[s].Iadj=0;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":DV");
          nPtr[s].DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
@@ -403,7 +403,7 @@ int loadINI(char* graphFile, int* sectPtr) {
             strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":R"); strcat(sectKeyPtr, snPtr);
             nPtr[s].R[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          }
-         nPtr[s].eta=0;
+         nPtr[s].yeld=0;
          nPtr[s].Iadj=0;
          nPtr[s].DV=0;
          nPtr[s].Pd=0;
@@ -704,8 +704,8 @@ int calcSR(nTy* from, double* Io) {
    if (from->to[from->out]==NULL) { // all out current summed
       //printf("SR out complete, calc input ...\n");
       from->Po=from->Vo*from->Io; // output power of father calculated from Vo on Io
-      from->Pd=from->Po*(1/from->eta-1);
-      from->Pi[0]=from->Po/from->eta;
+      from->Pd=from->Po*(1/from->yeld-1);
+      from->Pi[0]=from->Po/from->yeld;
       if (from->Vi[0]==0) {
          from->Vi[0]=findInputV(from);
          //printf("SR from->Vi[0]:%g\n", from->Vi[0]);
@@ -1021,7 +1021,7 @@ int showStructData() {
          printf("node:'%s' key:Pi[%d]  =%g\n", nodeName, i, nPtr[s].Pi[i]);
       }
       printf("node:'%s' key:Iadj=%g\n", nodeName, nPtr[s].Iadj);
-      printf("node:'%s' key:eta =%g\n", nodeName, nPtr[s].eta);
+      printf("node:'%s' key:yeld=%g\n", nodeName, nPtr[s].yeld);
       printf("node:'%s' key:DV  =%g\n", nodeName, nPtr[s].DV);
       printf("node:'%s' key:Pd  =%g\n", nodeName, nPtr[s].Pd);
       printf("node:'%s' key:Vo  =%g\n", nodeName, nPtr[s].Vo);
@@ -1070,7 +1070,7 @@ int saveINIres(nTy* nPtr, int nodes) {
          if (type!=3) { // no LOAD
             out+=sprintf(bufferPtr+out, "DV=%g\n", nPtr[n].DV);
             if (!strncasecmp(nPtr[n].name, "SR", 2)) {
-               out+=sprintf(bufferPtr+out, "n=%g\n", nPtr[n].eta);
+               out+=sprintf(bufferPtr+out, "n=%g\n", nPtr[n].yeld);
             } else {
                out+=sprintf(bufferPtr+out, "Iadj=%g\n", nPtr[n].Iadj);
             }

@@ -28233,10 +28233,12 @@ nk_do_property(nk_flags *ws,
     struct nk_rect empty;
 
     /* left decrement button */
+//if (name && name[1] != '#') {
     left.h = font->height/2;
     left.w = left.h;
     left.x = property.x + style->border + style->padding.x;
     left.y = property.y + style->border + property.h/2.0f - left.h/2;
+//}
 
     /* text label */
     if (name && name[0] != '#') {
@@ -28249,10 +28251,12 @@ nk_do_property(nk_flags *ws,
     label.h = property.h - (2 * style->border + 2 * style->padding.y);
 
     /* right increment button */
+//if (name && name[1] != '#') {
     right.y = left.y;
     right.w = left.w;
     right.h = left.h;
     right.x = property.x + property.w - (right.w + style->padding.x);
+//}
 
     /* edit */
     if (*state == NK_PROPERTY_EDIT) {
@@ -28301,7 +28305,7 @@ nk_do_property(nk_flags *ws,
     if (style->draw_begin) style->draw_begin(out, style->userdata);
     nk_draw_property(out, style, &property, &label, *ws, name, name_len, font);
     if (style->draw_end) style->draw_end(out, style->userdata);
-
+//if (name && name[1] != '#') {
     /* execute right button  */
     if (nk_do_button_symbol(ws, out, left, style->sym_left, behavior, &style->dec_button, in, font)) {
         switch (variant->kind) {
@@ -28326,6 +28330,7 @@ nk_do_property(nk_flags *ws,
             variant->value.d = NK_CLAMP(variant->min_value.d, variant->value.d + variant->step.d, variant->max_value.d); break;
         }
     }
+//}
     if (old != NK_PROPERTY_EDIT && (*state == NK_PROPERTY_EDIT)) {
         /* property has been activated so setup buffer */
         NK_MEMCPY(buffer, dst, (nk_size)*length);

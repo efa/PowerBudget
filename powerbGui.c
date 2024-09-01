@@ -39,6 +39,8 @@
 #define NK_INCLUDE_DEFAULT_FONT
 #define NK_IMPLEMENTATION
 #define NK_SDL_RENDERER_IMPLEMENTATION
+//#define NK_STRTOD strtod
+//#define NK_DTOA dtoa
 #include "nuklear.h"
 #include "nuklear_sdl_renderer.h"
 
@@ -93,7 +95,7 @@ int initNodeData(nTy* node) {
       node->R[i]=0;
       node->Pi[i]=0;
    }
-   node->eta=0;
+   node->yeld=0;
    node->Iadj=0;
    node->DV=0;
    node->Pd=0;
@@ -164,7 +166,7 @@ int saveINI(void* nodedit) {
       }
       if (type!=0) { // IN
          out+=sprintf(bufferPtr+out, "DV=%g\n", nodePtr->values.DV);
-         out+=sprintf(bufferPtr+out, "n=%g\n", nodePtr->values.eta);
+         out+=sprintf(bufferPtr+out, "n=%g\n", nodePtr->values.yeld);
          out+=sprintf(bufferPtr+out, "Iadj=%g\n", nodePtr->values.Iadj);
          out+=sprintf(bufferPtr+out, "Pd=%g\n", nodePtr->values.Pd);
       }
@@ -223,7 +225,7 @@ return 0;
       id=node_editor_add(nodeditPtr, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
       initNodeData(&node);
       strcpy(node.label, name); node.type=1; strcpy(node.label,"Buck"); strcpy(node.refdes,"U14");
-      strcpy(node.in[0],"IN"); node.eta=0.9; node.Vo=1.8;
+      strcpy(node.in[0],"IN"); node.yeld=0.9; node.Vo=1.8;
       fillNodeData(id, &node);
    }
    return 0;
