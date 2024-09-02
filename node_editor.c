@@ -370,18 +370,8 @@ node_editor_del(struct node_editor* editorPtr, int id) {
    return;
 }
 
-static void
-node_editor_init(struct node_editor *editor)
-{
-    memset(editor, 0, sizeof(*editor));
-    editor->begin = NULL;
-    editor->end = NULL;
-    editor->firstlink = NULL;
-    editor->lastlink = NULL;
-    editor->node_count=0;
-    editor->link_count=0;
-    editor->show_grid = nk_true;
-
+// create the IN node
+void node_editor_start(struct node_editor *editor) {
     int id;
     nTy node;
     char name[5];
@@ -433,6 +423,19 @@ node_editor_init(struct node_editor *editor)
 //#endif
 }
 
+static void
+node_editor_init(struct node_editor *editor)
+{
+    memset(editor, 0, sizeof(*editor));
+    editor->begin = NULL;
+    editor->end = NULL;
+    editor->firstlink = NULL;
+    editor->lastlink = NULL;
+    editor->node_count=0;
+    editor->link_count=0;
+    editor->show_grid = nk_true;
+}
+
 int nodeclick=0;
 int nodeid=0;
 //char text[10]="text";
@@ -449,6 +452,7 @@ node_editor(struct nk_context *ctx)
 
     if (!nodeEditor.initialized) {
         node_editor_init(&nodeEditor);
+        node_editor_start(&nodeEditor);
         nodeEditor.initialized = 1;
     }
 
@@ -801,6 +805,8 @@ node_editor(struct nk_context *ctx)
                     saveINI(nodedit);
                     printf("calc INI file\n");
                     calcINI();
+                    printf("load INI file\n");
+                    loadINIres(nodedit);
                 }
                 if (nk_contextual_item_label(ctx, grid_option[nodedit->show_grid],NK_TEXT_CENTERED))
                     nodedit->show_grid = !nodedit->show_grid;

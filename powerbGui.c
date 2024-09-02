@@ -228,21 +228,21 @@ int loadINIres(void* nodedit) {
    int sect;
    printf("loading ...\n");
    ret=loadINI(DefIniResFile, &sect);
-   printf("loaded\n");
-return 0;
-   for (int n=0; n<sect; n++) {
-      strcpy(name, "IN ");
-      id=node_editor_add(nodeditPtr, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
-      initNodeData(&node);
-      strcpy(node.label, name); node.type=0; strcpy(node.label,"IN"); node.Vo=5;
-      fillNodeData(id, &node);
+   printf("loaded %d sections, %d nodes\n", sect, sect-1);
+   printf("\n");
 
-      strcpy(name, "SR1");
-      id=node_editor_add(nodeditPtr, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
-      initNodeData(&node);
-      strcpy(node.label, name); node.type=1; strcpy(node.label,"Buck"); strcpy(node.refdes,"U14");
-      strcpy(node.in[0],"IN"); node.yeld=0.9; node.Vo=1.8;
-      fillNodeData(id, &node);
+   for (int n=0; n<sect; n++) {
+      printf("node:'%s'\n", nPtr[n].name);
+      if (!strcasecmp(nPtr[n].name, "board")) continue;
+      //strcpy(name, "IN ");
+      int in=1, out=1;
+      if (!strcasecmp(nPtr[n].name, "in")) in=0;
+      if (!strncasecmp(nPtr[n].name, "ld", 2)) out=0;
+      id=node_editor_add(nodeditPtr, nPtr[n].name, nk_rect(OFFSET+(3-nPtr[n].col)*(NODE_WIDTH+SPACING), OFFSET+nPtr[n].row/3*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), in, out);
+      printf("created GUI node:%d\n", id);
+      //initNodeData(&node);
+      //strcpy(node.name, name); node.type=nPtr[n].type; strcpy(node.label, nPtr[n].label); node.Vo=nPtr[n].Vo;
+      fillNodeData(id, &nPtr[n]);
    }
    return 0;
 } // int loadINIres(void* nodedit)

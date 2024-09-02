@@ -24,7 +24,7 @@
 #include "powerbLib.h"
 #include "fileIo.h"
 
-nTy* nPtr; // struct of nodes ptr
+nTy* nPtr; // vector of struct/nodes ptr
 int sect;  // number of sections/nodes
 dictionary* graphPtr; // INI file dictionary ptr
 
