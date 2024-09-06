@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with PowerBudget. If not, see <http://www.gnu.org/licenses/>.
 
+# Makefile to build 'PowerBudget' for Win on Win using GCC+GNUtoolchain
+# To be used on: MinGw64=>bin64 (MinGW/MSYS2)
+# require $ pacman 
 # Makefile used to build to Linux, MinGW/Win, macOS
 
 # Files
@@ -30,19 +33,39 @@ BINGUI = powerbGui
 BIN = $(BINCLI) $(BINGUI)
 
 # Flags
-CFLAGS += -std=gnu99 -I/usr/include/iniparser
-GFLAGS += $(CFLAGS) `sdl2-config --cflags`
+CFLAGS = -std=gnu99 -Wall
+GFLAGS = -std=gnu99 -Wall
+#CINCS = -I/usr/include/iniparser
+#GINCS = `sdl2-config --cflags` # -I/usr/include/SDL2 -D_REENTRANT
+#CLIBS = -L../iniparser-4.2.1
+#GLIBS = -L../iniparser-4.2.1
+#LDFLAGS = -liniparser
+#LGFLAGS = `sdl2-config --libs` # -lSDL2
 
 ifeq ($(OS),Windows_NT)
 	BIN := $(BIN).exe
-	LIBS = -lmingw32 -lSDL2main -lSDL2 -lopengl32 -lm -lGLU32
-else
+	CINCS += -I../iniparser-4.2.1/src
+	GINCS += -I../iniparser-4.2.1/src
+	CLIBS += -L../iniparser-4.2.1
+	GLIBS += -L../iniparser-4.2.1
+	LDFLAGS += -liniparser
+	LGFLAGS += -liniparser sdl2-config --libs` -lSDL2main
+else # Unix
 	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Darwin)
-		LIBS = -lSDL2 -framework OpenGL -lm
-	else
-		LIBS += -liniparser
-		GLIBS += -liniparser -lm `sdl2-config --libs`
+	ifeq ($(UNAME_S),Darwin) # macOS
+		CINCS += -I/usr/include/iniparser
+		GINCS += -I/usr/include/iniparser `sdl2-config --cflags`
+		CLIBS += -L/usr/lib/x86_64-linux-gnu
+		GLIBS += -L/usr/lib/x86_64-linux-gnu
+		LDFLAGS += -liniparser
+		LGFLAGS += -liniparser `sdl2-config --libs` -lm
+	else # Linux
+		CINCS += -I/usr/include/iniparser
+		GINCS += -I/usr/include/iniparser `sdl2-config --cflags` # -I/usr/include/SDL2 -D_REENTRANT
+		CLIBS += -L/usr/lib/x86_64-linux-gnu
+		GLIBS += -L/usr/lib/x86_64-linux-gnu
+		LDFLAGS += -liniparser
+		LGFLAGS += -liniparser `sdl2-config --libs` -lm # -lSDL2
 	endif
 endif
 
@@ -51,8 +74,8 @@ all: GFLAGS+=-O3
 all: $(BIN)
 
 $(BIN):
-	$(CC) $(CFLAGS) $(SRCCLI) $(LIBS) -o $(BINCLI)
-	$(CC) $(GFLAGS) $(SRCGUI) $(GLIBS) -o $(BINGUI)
+	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(BINCLI)
+	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(BINGUI)
 
 #fileIo.o: fileIo.c
 
@@ -61,9 +84,10 @@ $(BIN):
 debug: CFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
 debug: GFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
 debug: LDFLAGS+=-fsanitize=address
+debug: LGFLAGS+=-fsanitize=address
 debug:
-	$(CC) $(CFLAGS) $(SRCCLI) $(LDFLAGS) $(LIBS) -o $(BINCLI)
-	$(CC) $(GFLAGS) $(SRCGUI) $(LDFLAGS) $(GLIBS) -o $(BINGUI)
+	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(BINCLI)
+	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(BINGUI)
 
 clean:
 	rm -f $(BIN) $(OBJ)

@@ -271,7 +271,7 @@ void link_pop(struct node_editor* editorPtr, struct node_link* linkPtr) {
 }
 
 void node_editor_unlink(struct node_editor* editorPtr, struct node_link* linkPtr) {
-    struct node_link* linkPrevPtr;
+   //struct node_link* linkPrevPtr;
    //nodeEditorLinkShow();
    /*printf("link_count:%d\n", editorPtr->link_count);*/
    if (editorPtr->link_count>0) {
@@ -360,7 +360,7 @@ node_editor_find(struct node_editor *editor, int ID)
 
 static void
 node_editor_del(struct node_editor* editorPtr, int id) {
-   int l;
+   //int l;
    struct node* nodePtr;
    if (editorPtr->node_count>0) {
       nodePtr=node_editor_find(editorPtr, id);
@@ -465,9 +465,9 @@ node_editor(struct nk_context *ctx)
         nk_layout_space_begin(ctx, NK_STATIC, total_space.h, nodedit->node_count);
         {
             int inclick=0;
-            int id;
-            int inp;
-            struct node_link* linkSavePtr;
+            int id=0;
+            int inp=0;
+            struct node_link* linkSavePtr=NULL;
             struct nk_rect size = nk_layout_space_bounds(ctx);
             struct nk_panel *node = 0;
 
@@ -516,13 +516,14 @@ node_editor(struct nk_context *ctx)
                     enum {LR,SR};
                     int voltReg_radio;
 
-                    char refdes[7]="U1"; char yeld[6]="0.9";   char R0[6]="93";
-                    char Vi[6]="5.0";    char DV[6]="3.2";     char Vo[6]="1.8";
-                    char Ii[6]="0.214";  char Iadj[6]="0.005"; char Io[6]="0.536";
-                    char Pi[6]="1.072";  char Pd[6]="0.107";   char Po[6]="0.965";
+                    char refdes[7]="U1";
+                    //char yeld[6]="0.9";  char R0[6]="93";
+                    //char Vi[6]="5.0";    char DV[6]="3.2";     char Vo[6]="1.8";
+                    //char Ii[6]="0.214";  char Iadj[6]="0.005"; char Io[6]="0.536";
+                    //char Pi[6]="1.072";  char Pd[6]="0.107";   char Po[6]="0.965";
                     //sprintf(it->values.refdes, "%d", it->ID);
                     //strncpy(it->values.refdes, refdes, 6);
-                    strncpy(refdes, it->values.refdes, 6);
+                    strncpy(refdes, it->values.refdes, 7);
 #if 0
                     // convert from double to string
                     snprintf(Vi, 6, "%g", it->values.Vi[0]);
@@ -594,7 +595,7 @@ node_editor(struct nk_context *ctx)
                        if (voltReg_radio == SR) strcpy(it->name, "SR");
                     }
 
-                    strncpy(it->values.refdes, refdes, 6);
+                    strncpy(it->values.refdes, refdes, 7);
 #if 0
                     // convert back from string to double
                     char* endPtr;

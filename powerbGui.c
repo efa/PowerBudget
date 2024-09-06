@@ -85,8 +85,8 @@ int initNodeData(nTy* node) {
    node->type=0; // IN=0, SR=1, LR=2, RS=4, LD=3
    node->label[0]='\0'; // any user string
    node->refdes[0]='\0'; // "Uxx" or "RNxxxx"
-   node->col; // used for positioning
-   node->row; // used for positioning
+   node->col=-1; // used for positioning
+   node->row=-1; // used for positioning
    for (i=0; i<MaxIns; i++) {
       node->from[i]=NULL; // SR,LR,RS has 1, LD up to MaxIns
       node-> in[i][0]='\0'; // used only by GUI
@@ -185,7 +185,7 @@ int saveINI(void* nodedit) {
    }
    //printf("\n");
    //printf("buffer:'\n%s\n'\n", bufferPtr);
-   int len=sizeof(bufferPtr);
+   //int len=sizeof(bufferPtr);
    //printf("out:%d len:%d\n", out, len);
    FILE* filePtr=openWrite(DefIniFile);
    fwrite(bufferPtr, 1, out, filePtr);
@@ -221,13 +221,13 @@ int loadINIres(void* nodedit) {
    node_editor_init(&nodeEditor);
    nodeEditor.initialized = 1;
    int id;
-   nTy node;
-   char name[5];
+   //nTy node;
+   //char name[5];
 
-   int ret;
+   //int ret;
    int sect;
    printf("loading ...\n");
-   ret=loadINI(DefIniResFile, &sect);
+   loadINI(DefIniResFile, &sect);
    printf("loaded %d sections, %d nodes\n", sect, sect-1);
    printf("\n");
 

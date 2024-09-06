@@ -57,7 +57,7 @@ int loadINI(char* graphFile, int* sectPtr) {
       if (strcasecmp(noPtr, "lr")==0) lr++;
       if (strcasecmp(noPtr, "rs")==0) rs++;
       if (strcasecmp(noPtr, "ld")==0) ld++;
-      int keys=iniparser_getsecnkeys(graphPtr, sectNamePtr);
+      iniparser_getsecnkeys(graphPtr, sectNamePtr);
       //printf("keys:%d\n", keys);
    }
    if (board==0) {
@@ -415,7 +415,7 @@ int loadINI(char* graphFile, int* sectPtr) {
             nPtr[s].to[t]=NULL;
          }
          nPtr[s].out=0;
-         if (nPtr[s].Ii==0 && nPtr[s].Pi==0 && nPtr[s].R==0) {
+         if (nPtr[s].Ii[0]==0 && nPtr[s].Pi[0]==0 && nPtr[s].R[0]==0) {
             printf("Invalid input for LD:'%s'. Quit\n", sectNamePtr);
             return -1;
          }
@@ -476,7 +476,7 @@ int loadINI(char* graphFile, int* sectPtr) {
          }
          //printf("srcOK:%d\n", srcOK);
          if (srcOK==0) {
-            printf("Node:'%s' from:'%s' not found. Quit\n", strPtr);
+            printf("Node:'%s' from:'%s' not found. Quit\n", nPtr[s].name, strPtr);
             return -1;
          }
       }
@@ -629,7 +629,7 @@ int loadINI(char* graphFile, int* sectPtr) {
       for (int c=md; c>=0; c--) {
          if (node[c][r]!=NULL) {
             // printf("col:%d row:%d ptr addr:%p name:'%s'\n", c, r, node[c][r], node[c][r]->name);
-            printf(" '%- 4s'|", node[c][r]->name);
+            printf(" '%-4s'|", node[c][r]->name);
          } else {
             printf("       |");
          }
@@ -761,7 +761,7 @@ int calcRS(nTy* from, double Io, double* Vo) {
    int ret=0;
    //printf("from->name:%s\n", from->name);
    //printf("RS Io:%g\n", Io);
-   double Vi; // Voltage at input of RS series
+   double Vi=0; // Voltage at input of RS series
    double Rt=0;
    int p;
    nTy* fromSave=from; // save for 2nd pass
@@ -816,7 +816,7 @@ int calcNodes() {
    // calc section
    printf("calc section ...\n");
    for (int s=0; s<sect; s++) { // INI sections = # nodes
-      if (&nPtr[s]==NULL) break;
+      if (nPtr[s].type==-1) break;
       if (nPtr[s].type!=3) continue; // calc only LDx
       //printf("---\n");
       //printf("new s:%d node:'%s'\n", s, nPtr[s].name);
@@ -835,8 +835,7 @@ int calcNodes() {
                   nPtr[s].Vi[i]=nPtr[s].from[i]->Vo; // copy Voltage U=>D
                } else { // found RS so need voltage partitor
                   //printf("RS processing ...\n");
-                  int ret;
-                  ret=calcRS(*nPtr[s].from, nPtr[s].Ii[i], &Vo);
+                  calcRS(*nPtr[s].from, nPtr[s].Ii[i], &Vo);
 #if 0
                   //printf("nPtr[s].name:%s\n", nPtr[s].name);
                   double R[MaxRserie];
