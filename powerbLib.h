@@ -1,4 +1,4 @@
-/* PowerBudget v0.00.01a 2024/08/20 calculate power dissipation and budget */
+/* PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget */
 /* Copyright 2024 Valerio Messina http://users.iol.it/efa              */
 /* powerbLib.h is part of PowerBudget
    PowerBudget is free software: you can redistribute it and/or modify
@@ -19,8 +19,9 @@
 #ifndef POWERB_H_
 #define POWERB_H_
 
-#define DefIniFile    "powerb.ini"     // default filename for input with node graph
-#define DefIniResFile "powerb.res.ini" // default filename for output with results
+#define DefCliIniFile    "powerb.ini"     // default filename for input with node graph
+#define DefGuiIniFile    "powerbG2C.ini"  // default filename used to pass data GUI to CLI
+#define DefCliIniResFile "powerb.res.ini" // default filename for output with results
 #define MaxIns  3 // number of max input supply for a load, count from 0
 #define MaxOut 17 // 16 number of max load for a supply, count from 0
 #define MaxRserie 4 // number of max R in serie
@@ -65,6 +66,8 @@ int fillNodeData(int id, nTy* node); // GUI:
 int loadINI(char* graphFile, int* sectPtr); // LIB: load INI file
 
 int calcNodes(); // LIB: calc nodes
+
+int showStructData(); // show struct data
 
 int saveINIres(nTy* nPtr, int nodes); // LIB: save INI with results
 

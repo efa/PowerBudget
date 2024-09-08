@@ -1,4 +1,4 @@
-/* PowerBudget v0.00.01a 2024/08/20 calculate power dissipation and budget */
+/* PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget */
 /* Copyright 2024 Valerio Messina http://users.iol.it/efa              */
 /* powerb.c is part of PowerBudget
    PowerBudget is free software: you can redistribute it and/or modify
@@ -41,7 +41,7 @@ int main(int argNum, char* argV[]) {
       graphFile[0]='\0';
       strcpy(graphFile, argV[1]);
    } else { // default fileName
-      char fileName[]=DefIniFile; // "powerb.ini"
+      char fileName[]=DefCliIniFile; // "powerb.ini"
       int len=strlen(fileName);
       //printf("len:%d\n", len);
       graphFile=malloc(len+1); // add NULL
@@ -60,6 +60,12 @@ int main(int argNum, char* argV[]) {
    }
 
    ret=calcNodes();
+   if (ret!=0) {
+      printf("calcNodes returned not OK:%d\n", ret);
+      ret=freeMem();
+      free(graphFile);
+      return -1;
+   }
 
    //ret=showStructData();
 

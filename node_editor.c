@@ -1,4 +1,4 @@
-/* PowerBudget v0.00.01a 2024/08/20 calculate power dissipation and budget */
+/* PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget */
 /* Copyright 2024 Valerio Messina http://users.iol.it/efa              */
 /* node_editor.c is part of PowerBudget
    PowerBudget is free software: you can redistribute it and/or modify
@@ -71,8 +71,8 @@ struct node_linking {
 
 struct node_editor {
     int initialized;
-    struct node node_buf[32];
-    struct node_link links[64];
+    //struct node node_buf[32];
+    //struct node_link links[64];
     struct node *begin;
     struct node *end;
     struct node_link* firstlink;
@@ -218,7 +218,7 @@ void link_push(struct node_editor* editorPtr, struct node_link* linkPtr) {
     }
 } // void link_push(struct node_editor* editorPtr, struct node_link* linkPtr)
 
-// link two nodes
+// link two nodes: nodeIDfrom, slotIDfrom, nodeIDto, slotIDto
 static void
 node_editor_link(struct node_editor *editor, int in_id, int in_slot,
     int out_id, int out_slot)

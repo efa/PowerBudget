@@ -1,4 +1,4 @@
-/* PowerBudget v0.00.01a 2024/08/20 calculate power dissipation and budget */
+/* PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget */
 /* Copyright 2024 Valerio Messina http://users.iol.it/efa              */
 /* powerbLib.c is part of PowerBudget
    PowerBudget is free software: you can redistribute it and/or modify
@@ -816,7 +816,8 @@ int calcNodes() {
    // calc section
    printf("calc section ...\n");
    for (int s=0; s<sect; s++) { // INI sections = # nodes
-      if (nPtr[s].type==-1) break;
+      //printf("node:%d type:%d\n", s, nPtr[s].type);
+      if (nPtr[s].type==-1) continue; // board
       if (nPtr[s].type!=3) continue; // calc only LDx
       //printf("---\n");
       //printf("new s:%d node:'%s'\n", s, nPtr[s].name);
@@ -1039,7 +1040,7 @@ int showStructData() {
 
 int saveINIres(nTy* nPtr, int nodes) {
    char bufferPtr[5000]="";
-   printf("Writing nodes:%d to INIres file:'%s'\n", nodes, DefIniResFile);
+   printf("Writing nodes:%d to INIres file:'%s'\n", nodes, DefCliIniResFile);
    int out=0;
    //out+=sprintf(bufferPtr+out, "[BOARD]\n");
    //out+=sprintf(bufferPtr+out, "label=%s\n", "ES3");
@@ -1093,7 +1094,7 @@ int saveINIres(nTy* nPtr, int nodes) {
    //printf("buffer:'\n%s\n'\n", bufferPtr);
    //int len=sizeof(bufferPtr);
    //printf("out:%d len:%d\n", out, len);
-   FILE* filePtr=openWrite(DefIniResFile);
+   FILE* filePtr=openWrite(DefCliIniResFile);
    fwrite(bufferPtr, 1, out, filePtr);
    fclose(filePtr);
    printf("Written out:%d Bytes\n", out);

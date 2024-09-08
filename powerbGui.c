@@ -1,4 +1,4 @@
-/* PowerBudget v0.00.01a 2024/08/20 calculate power dissipation and budget */
+/* PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget */
 /* Copyright 2024 Valerio Messina http://users.iol.it/efa              */
 /* powerbGui.c is part of PowerBudget
    PowerBudget is free software: you can redistribute it and/or modify
@@ -187,12 +187,34 @@ int saveINI(void* nodedit) {
    //printf("buffer:'\n%s\n'\n", bufferPtr);
    //int len=sizeof(bufferPtr);
    //printf("out:%d len:%d\n", out, len);
-   FILE* filePtr=openWrite(DefIniFile);
+   FILE* filePtr=openWrite(DefGuiIniFile);
    fwrite(bufferPtr, 1, out, filePtr);
    fclose(filePtr);
-   printf("Written out:%d Bytes\n", out);
+   printf("Written out:%d Bytes file:'%s'\n", out, DefGuiIniFile);
    return 0;
 } // int saveINI(void* nodedit)
+
+int calcINI() {
+   system("powerb "DefGuiIniFile);
+   return 0;
+} // int calcINI()
+
+// find the GUI node that point to values nodePtr
+int findGuiNode(void* nodedit, nTy* nodeValPtr) {
+   struct node_editor* nodeditPtr;
+   nodeditPtr=nodedit;
+   struct node* nodePtr;
+   printf("graph searching  node:%p\n", nodeValPtr);
+   nodePtr=nodeditPtr->begin;
+   for (int n=0; n<nodeEditor.node_count; n++) {
+      printf("graph n:%02d id:%02d node:%p\n", n, nodePtr->ID, nodePtr);
+      if (nodePtr->values.type==-1) continue; // BOARD
+      if (&nodePtr->values==nodeValPtr) break;
+      nodePtr=nodePtr->next;
+if (n==4) return -1;
+   }
+   return nodePtr->ID;
+} // int findGuiNode(void* nodedit, nTy* nodeValPtr)
 
 int loadINIres(void* nodedit) {
    struct node_editor* nodeditPtr;
@@ -206,14 +228,14 @@ int loadINIres(void* nodedit) {
       found=0;
       nodePtr=nodeditPtr->begin;
       if (nodePtr) {
-         printf("Remove node:%p\n", nodePtr);
+         //printf("Remove node:%p\n", nodePtr);
          node_editor_delnode(nodeditPtr, nodePtr);
          found=1;
          //nodePtr=nodePtr->next;
       }
       pass++;
    } while (found); // removed all nodes
-   printf("found:%d pass:%d\n", found, pass);
+   //printf("found:%d pass:%d\n", found, pass);
    printf("cleared\n");
    printf("\n");
 
@@ -227,30 +249,45 @@ int loadINIres(void* nodedit) {
    //int ret;
    int sect;
    printf("loading ...\n");
-   loadINI(DefIniResFile, &sect);
+   loadINI(DefCliIniResFile, &sect);
    printf("loaded %d sections, %d nodes\n", sect, sect-1);
    printf("\n");
 
+   // create GUI nodes
+   printf("Creating GUI nodes ...\n");
    for (int n=0; n<sect; n++) {
-      printf("node:'%s'\n", nPtr[n].name);
-      if (!strcasecmp(nPtr[n].name, "board")) continue;
-      //strcpy(name, "IN ");
+      printf("graph n:%02d node:'%s'\n", n, nPtr[n].name);
+      //if (!strcasecmp(nPtr[n].name, "board")) continue;
+      if (nPtr[n].type==-1) continue; // BOARD
       int in=1, out=1;
       if (!strcasecmp(nPtr[n].name, "in")) in=0;
       if (!strncasecmp(nPtr[n].name, "ld", 2)) out=0;
       id=node_editor_add(nodeditPtr, nPtr[n].name, nk_rect(OFFSET+(3-nPtr[n].col)*(NODE_WIDTH+SPACING), OFFSET+nPtr[n].row/3*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), in, out);
       printf("created GUI node:%d\n", id);
-      //initNodeData(&node);
-      //strcpy(node.name, name); node.type=nPtr[n].type; strcpy(node.label, nPtr[n].label); node.Vo=nPtr[n].Vo;
+      printf("val addr node:%p\n", &nPtr[n]);
       fillNodeData(id, &nPtr[n]);
    }
+
+#if 0
+   // create GUI links
+   printf("Creating GUI links ...\n");
+   nodePtr=nodeditPtr->begin;
+   for (int n=0; n<nodeEditor.node_count; n++) {
+      printf("graph n:%02d id:%02d node:%p\n", n, nodePtr->ID, nodePtr);
+      if (nodePtr->values.type==-1) continue; // BOARD
+      if (nodePtr->values.type==3) continue; // LD
+      for (int l=0; l<MaxOut; l++) {
+         if (nodePtr->values.to[l]!=NULL) {
+            int id=findGuiNode(nodeditPtr, nodePtr->values.to[l]);
+if (id==-1) break;
+            node_editor_link(nodeditPtr, nodePtr->ID, 0, id, 0); // link two nodes: nodeIDfrom, slotIDfrom, nodeIDto, slotIDto
+         }
+      }
+      nodePtr=nodePtr->next;
+   }
+#endif
    return 0;
 } // int loadINIres(void* nodedit)
-
-int calcINI() {
-   system("powerb");
-   return 0;
-} // int calcINI()
 
 #if 0
 char* dtoa(double d) { // convert a double to an auto-allocated string. Remember to free the string

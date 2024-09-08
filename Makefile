@@ -1,4 +1,4 @@
-# PowerBudget v0.00.01a 2024/08/20 calculate power dissipation and budget
+# PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget
 # Copyright 2024 Valerio Messina http://users.iol.it/efa
 # Makefile is part of PowerBudget
 # PowerBudget is free software: you can redistribute it and/or modify
@@ -14,10 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with PowerBudget. If not, see <http://www.gnu.org/licenses/>.
 
-# Makefile to build 'PowerBudget' for Win on Win using GCC+GNUtoolchain
-# To be used on: MinGw64=>bin64 (MinGW/MSYS2)
-# require $ pacman 
-# Makefile used to build to Linux, MinGW/Win, macOS
+# Makefile used to build to: Linux, MinGW/Msys2/Win, macOS
+# Win: MinGw64=>bin64 (MinGW/MSYS2)
+#
+# To build for debug use: $ make debug
+
+HOST=$(shell uname -o)
+PKG=$(HOST)
+BIT=64
 
 # Files
 SRCCLI = powerb.c powerbLib.c fileIo.c
@@ -37,19 +41,19 @@ CFLAGS = -std=gnu99 -Wall
 GFLAGS = -std=gnu99 -Wall
 #CINCS = -I/usr/include/iniparser
 #GINCS = `sdl2-config --cflags` # -I/usr/include/SDL2 -D_REENTRANT
-#CLIBS = -L../iniparser-4.2.1
-#GLIBS = -L../iniparser-4.2.1
+#CLIBS = -L../iniparser-v4.2.4/build
+#GLIBS = -L../iniparser-v4.2.4/build
 #LDFLAGS = -liniparser
 #LGFLAGS = `sdl2-config --libs` # -lSDL2
 
 ifeq ($(OS),Windows_NT)
 	BIN := $(BIN).exe
-	CINCS += -I../iniparser-4.2.1/src
-	GINCS += -I../iniparser-4.2.1/src
-	CLIBS += -L../iniparser-4.2.1
-	GLIBS += -L../iniparser-4.2.1
+	CINCS += -I../iniparser-v4.2.4/src
+	GINCS += -I../iniparser-v4.2.4/src `sdl2-config --cflags`
+	CLIBS += -L../iniparser-v4.2.4/build
+	GLIBS += -L../iniparser-v4.2.4/build
 	LDFLAGS += -liniparser
-	LGFLAGS += -liniparser sdl2-config --libs` -lSDL2main
+	LGFLAGS += -liniparser `sdl2-config --libs` -lSDL2main
 else # Unix
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Darwin) # macOS
@@ -81,6 +85,18 @@ $(BIN):
 
 #powerbLib.o: powerbLib.c
 
+strip:
+	strip $(BIN)
+
+cleanobj:
+	rm -f *.o
+
+cleanbin:
+	rm -f $(CLI) $(GUI)
+
+clean:
+	rm -f $(BIN) $(OBJ)
+
 debug: CFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
 debug: GFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
 debug: LDFLAGS+=-fsanitize=address
@@ -89,8 +105,14 @@ debug:
 	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(BINCLI)
 	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(BINGUI)
 
-clean:
-	rm -f $(BIN) $(OBJ)
+bin: all cleanobj strip
 
-strip:
-	strip $(BIN)
+force: clean bin
+	rm -f *.o
+
+pkg:
+	@echo ""
+	mv $(CLI) $(GUI) ..
+	@makePkg.sh $(PKG) $(BIT)
+
+rel: force pkg

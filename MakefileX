@@ -1,0 +1,101 @@
+# PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget
+# Copyright 2024 Valerio Messina http://users.iol.it/efa
+# Makefile is part of PowerBudget - calculate power dissipation and budget
+# PowerBudget is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# PowerBudget is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with PowerBudget. If not, see <http://www.gnu.org/licenses/>.
+#
+# Makefile to cross-build 'PowerBudget' from Linux to Win64 using MinGW64
+# Linux=>Win64
+# depend: $ sudo apt install mingw-w64 mingw-w64-tools
+#         NOTE: cross-build iniparser in: ../iniparser-v4.2.1/
+#               cross-build SDL2 in: ../SDL2-2.30.7/x86_64-w64-mingw32/
+#
+# To build for debug use: $ make debug
+
+HOST=$(shell uname -o)
+PKG=WinMgw
+BIT=64
+
+# Files
+SRCCLI=powerb.c powerbLib.c fileIo.c
+SRCGUI=powerbGui.c powerbLib.c fileIo.c
+SRC=$(SRCCLI) $(SRCGUI)
+
+OBJCLI=$(SRCCLI:.c=.o)
+OBJGUI=$(SRCGUI:.c=.o)
+OBJ=$(OBJCLI) $(OBJGUI)
+
+BINCLI=powerb
+BINGUI=powerbGui
+CLI=$(BINCLI)$(PKG)$(BIT).exe
+GUI=$(BINGUI)$(PKG)$(BIT).exe
+BIN=$(CLI) $(GUI)
+
+# Tools
+CC=/usr/bin/x86_64-w64-mingw32-gcc # Cross-compile to Win64 (package mingw-w64)
+LD=/usr/bin/x86_64-w64-mingw32-ld
+PKGCONFIG=/usr/bin/x86_64-w64-mingw32-pkg-config
+PKG_CONFIG_LIBDIR=../SDL2-2.30.7/x86_64-w64-mingw32/lib/pkgconfig
+
+# Flags
+CFLAGS=-std=gnu99 -Wall -D__USE_MINGW_ANSI_STDIO=1
+#GFLAGS= $(CFLAGS) -I../SDL2-2.30.7/x86_64-w64-mingw32/include/ -I../SDL2-2.30.7/x86_64-w64-mingw32/include/SDL2 #-Dmain=SDL_main
+GFLAGS= $(CFLAGS) `$(PKGCONFIG) --define-prefix --cflags-only-other sdl2`
+CINCS=-I../iniparser-v4.2.1/src
+GINCS=$(CINCS) `$(PKGCONFIG) --define-prefix --cflags-only-I sdl2`
+CLIBS=-L../iniparser-v4.2.1/
+GLIBS=$(CLIBS) `$(PKGCONFIG) --define-prefix --libs-only-L sdl2`
+LDFLAGS=-liniparser
+#LGFLAGS=-L../iniparser-v4.2.1/ -liniparser -L../SDL2-2.30.7/x86_64-w64-mingw32/lib -lmingw32 -lSDL2main -lSDL2 #-mwindows
+LGFLAGS=$(LDFLAGS) `$(PKGCONFIG) --define-prefix --libs-only-l --libs-only-other sdl2`
+
+all: CFLAGS+=-O3
+all: GFLAGS+=-O3
+all: $(CLI) $(GUI)
+	@echo CLI:$(CLI) GUI:$(GUI)
+
+$(CLI):
+	@echo Building CLI:$(CLI) ...
+	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(CLI)
+
+$(GUI):
+	@echo Building GUI:$(GUI) ...
+	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(GUI)
+
+strip:
+	strip $(CLI) $(GUI)
+
+cleanobj:
+	rm -f *.o
+
+cleanbin:
+	rm -f $(CLI) $(GUI)
+
+clean:
+	rm -f *.o $(CLI) $(GUI)
+
+debug: CFLAGS+=-O1 -g
+debug: GFLAGS+=-O1 -g
+debug: cleanobj all cleanobj
+
+bin: all cleanobj strip
+
+force: clean bin
+	rm -f *.o
+
+pkg:
+	@echo ""
+	mv $(CLI) $(GUI) ..
+	@makePkg.sh $(PKG) $(BIT)
+
+rel: force pkg
