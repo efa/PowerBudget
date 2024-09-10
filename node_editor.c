@@ -48,7 +48,7 @@ struct node {
     int output_count;
     struct node *prev;
     struct node *next;
-    nTy values;
+    nTy* valuesPtr;
 };
 
 struct node_link {
@@ -152,9 +152,9 @@ node_editor_add(struct node_editor *editor, const char *name, struct nk_rect bou
 {
     struct node *node;
     //NK_ASSERT((nk_size)editor->node_count < NK_LEN(editor->node_buf));
-    printf("add node id:%d\n", IDs);
+    //printf("add node id:%d\n", IDs);
     //printf("editor->node_count:%d\n", editor->node_count);
-//nodeEditorShow();
+    //nodeEditorShow();
     //node = &editor->node_buf[editor->node_count++];
     node = malloc(sizeof(struct node));
     editor->node_count++;
@@ -170,12 +170,12 @@ node_editor_add(struct node_editor *editor, const char *name, struct nk_rect bou
     //node->value = 0;
     //node->values=NULL; // should init values too
     node_editor_push(editor, node);
-    printf("id:%d node:%p\n", node->ID, node);
-    printf("editorPtr->node_buf[%d] node_count:%d\n", node->ID, editor->node_count);
+    //printf("id:%d node:%p\n", node->ID, node);
+    //printf("editorPtr->node_buf[%d] node_count:%d\n", node->ID, editor->node_count);
     IDs++;
     //printf("next IDs:%d\n", IDs);
-    printf("\n");
-//nodeEditorShow();
+    //printf("\n");
+    //nodeEditorShow();
     return node->ID;
 }
 
@@ -227,17 +227,17 @@ node_editor_link(struct node_editor *editor, int in_id, int in_slot,
     //NK_ASSERT((nk_size)editor->link_count < NK_LEN(editor->links));
     //link = &editor->links[editor->link_count++];
     link = malloc(sizeof(struct node_link));
-    printf("add link:%p\n", link);
-    printf("inid:%d in:%d outid:%d out:%d\n", in_id, in_slot, out_id, out_slot);
-//nodeEditorLinkShow();
+    //printf("add link:%p\n", link);
+    //printf("inid:%d in:%d outid:%d out:%d\n", in_id, in_slot, out_id, out_slot);
+    //nodeEditorLinkShow();
     editor->link_count++;
     link->input_id = in_id;
     link->input_slot = in_slot;
     link->output_id = out_id;
     link->output_slot = out_slot;
     link_push(editor, link);
-    printf("\n");
-//nodeEditorLinkShow();
+    //printf("\n");
+    //nodeEditorLinkShow();
 }
 
 // remove a node from the linked list
@@ -294,7 +294,7 @@ void node_unlink(struct node_editor* editorPtr, struct node* nodePtr) {
       while (linkPtr) {
          if(linkPtr->output_id==nodePtr->ID ||
             linkPtr->input_id==nodePtr->ID) {
-            printf("Remove link:%p\n", linkPtr);
+            //printf("Remove link:%p\n", linkPtr);
             node_editor_unlink(editorPtr, linkPtr);
             found=1;
             break;
@@ -303,15 +303,15 @@ void node_unlink(struct node_editor* editorPtr, struct node* nodePtr) {
       }
       pass++;
    } while (found); // checked all links without find anyone connected to node
-   printf("found:%d pass:%d\n", found, pass);
-   printf("link_count:%d\n", editorPtr->link_count);
+   //printf("found:%d pass:%d\n", found, pass);
+   //printf("link_count:%d\n", editorPtr->link_count);
    //nodeEditorLinkShow();
 }
 
 static void
 node_editor_delnode(struct node_editor* editorPtr, struct node* nodePtr) {
    if (editorPtr->node_count>0) {
-      printf("delete node:%p\n", nodePtr);
+      //printf("delete node:%p\n", nodePtr);
       //nodeEditorShow();
       // at first remove all linking and linked links to the node
       node_unlink(editorPtr, nodePtr);
@@ -364,63 +364,10 @@ node_editor_del(struct node_editor* editorPtr, int id) {
    struct node* nodePtr;
    if (editorPtr->node_count>0) {
       nodePtr=node_editor_find(editorPtr, id);
-      printf("del id:%d node:%p\n", id, nodePtr);
+      //printf("del id:%d node:%p\n", id, nodePtr);
       node_editor_delnode(editorPtr, nodePtr);
    }
    return;
-}
-
-// create the IN node
-void node_editor_start(struct node_editor *editor) {
-    int id;
-    nTy node;
-    char name[5];
-
-    strcpy(name, "IN");
-    id=node_editor_add(editor, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
-    initNodeData(&node);
-    strcpy(node.name, name); node.type=0; strcpy(node.label, name); node.Vo=5;
-    fillNodeData(id, &node);
-
-//#if 0
-    strcpy(name, "SR1");
-    id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
-    initNodeData(&node);
-    strcpy(node.name, name); node.type=1; strcpy(node.label,"Buck"); strcpy(node.refdes,"U14");
-    strcpy(node.in[0],"IN"); node.yeld=0.9; node.Vo=1.8;
-    fillNodeData(id, &node);
-    strcpy(name, "LR1");
-    id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
-    initNodeData(&node);
-    strcpy(node.name, name); node.type=2; strcpy(node.label,"LDO1"); strcpy(node.refdes,"U12");
-    strcpy(node.in[0],"IN"); node.Iadj=0.005; node.Vo=3.6;
-    fillNodeData(id, &node);
-    strcpy(name, "LR2");
-    id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
-    initNodeData(&node);
-    strcpy(node.name, name); node.type=2; strcpy(node.label,"LDO2"); strcpy(node.refdes,"U13");
-    strcpy(node.in[0],"LR1"); node.Iadj=0.005; node.Vo=3.3L;
-    fillNodeData(id, &node);
-    strcpy(name, "LD1");
-    id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 3, 0);
-    initNodeData(&node);
-    strcpy(node.name, name); node.type=3; strcpy(node.label,"SpW"); strcpy(node.refdes,"U20");
-    strcpy(node.in[0],"SR1"); node.Ii[0]=0.528; strcpy(node.in[1],"SR1"); node.Ii[1]=0.008; strcpy(node.in[2],"LR2"); node.Ii[2]=0.317;
-    fillNodeData(id, &node);
-    strcpy(name, "LD2");
-    id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 1, 0);
-    initNodeData(&node);
-    strcpy(node.name, name); node.type=3; strcpy(node.label,"LVDS"); strcpy(node.refdes,"U6");
-    strcpy(node.in[0],"LR2"); node.Ii[0]=0.0354;
-    fillNodeData(id, &node);
-    node_editor_link(editor, 0, 0, 1, 0);
-    node_editor_link(editor, 0, 0, 2, 0);
-    node_editor_link(editor, 2, 0, 3, 0);
-    node_editor_link(editor, 1, 0, 4, 0);
-    node_editor_link(editor, 1, 0, 4, 1);
-    node_editor_link(editor, 3, 0, 4, 2);
-    node_editor_link(editor, 3, 0, 5, 0);
-//#endif
 }
 
 static void
@@ -434,6 +381,65 @@ node_editor_init(struct node_editor *editor)
     editor->node_count=0;
     editor->link_count=0;
     editor->show_grid = nk_true;
+}
+
+// create the IN node
+void node_editor_start(struct node_editor *editor) {
+    int id;
+    //nTy node;
+    //nTy* nodePtr;
+    char name[5];
+
+    int sect=6;
+    //printf("nPtr:%p\n", nPtr);
+    nPtr=malloc(sect*sizeof(nTy)); // allocate space for sect nTy
+    //printf("nPtr:%p\n", nPtr);
+
+    strcpy(name, "IN"); sect=0;
+    id=node_editor_add(editor, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
+    initNodeData(&nPtr[sect]);
+    strcpy(nPtr[sect].name, name); nPtr[sect].type=0; strcpy(nPtr[sect].label, name); nPtr[sect].Vo=5;
+    fillNodeData(id, &nPtr[sect]);
+
+//#if 0
+    strcpy(name, "SR1"); sect++;
+    id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
+    initNodeData(&nPtr[sect]);
+    strcpy(nPtr[sect].name, name); nPtr[sect].type=1; strcpy(nPtr[sect].label,"Buck"); strcpy(nPtr[sect].refdes,"U14");
+    strcpy(nPtr[sect].in[0],"IN"); nPtr[sect].yeld=0.9; nPtr[sect].Vo=1.8;
+    fillNodeData(id, &nPtr[sect]);
+    strcpy(name, "LR1"); sect++;
+    id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
+    initNodeData(&nPtr[sect]);
+    strcpy(nPtr[sect].name, name); nPtr[sect].type=2; strcpy(nPtr[sect].label,"LDO1"); strcpy(nPtr[sect].refdes,"U12");
+    strcpy(nPtr[sect].in[0],"IN"); nPtr[sect].Iadj=0.005; nPtr[sect].Vo=3.6;
+    fillNodeData(id, &nPtr[sect]);
+    strcpy(name, "LR2"); sect++;
+    id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
+    initNodeData(&nPtr[sect]);
+    strcpy(nPtr[sect].name, name); nPtr[sect].type=2; strcpy(nPtr[sect].label,"LDO2"); strcpy(nPtr[sect].refdes,"U13");
+    strcpy(nPtr[sect].in[0],"LR1"); nPtr[sect].Iadj=0.005; nPtr[sect].Vo=3.3L;
+    fillNodeData(id, &nPtr[sect]);
+    strcpy(name, "LD1"); sect++;
+    id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 3, 0);
+    initNodeData(&nPtr[sect]);
+    strcpy(nPtr[sect].name, name); nPtr[sect].type=3; strcpy(nPtr[sect].label,"SpW"); strcpy(nPtr[sect].refdes,"U20");
+    strcpy(nPtr[sect].in[0],"SR1"); nPtr[sect].Ii[0]=0.528; strcpy(nPtr[sect].in[1],"SR1"); nPtr[sect].Ii[1]=0.008; strcpy(nPtr[sect].in[2],"LR2"); nPtr[sect].Ii[2]=0.317;
+    fillNodeData(id, &nPtr[sect]);
+    strcpy(name, "LD2"); sect++;
+    id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 1, 0);
+    initNodeData(&nPtr[sect]);
+    strcpy(nPtr[sect].name, name); nPtr[sect].type=3; strcpy(nPtr[sect].label,"LVDS"); strcpy(nPtr[sect].refdes,"U6");
+    strcpy(nPtr[sect].in[0],"LR2"); nPtr[sect].Ii[0]=0.0354;
+    fillNodeData(id, &nPtr[sect]);
+    node_editor_link(editor, 0, 0, 1, 0);
+    node_editor_link(editor, 0, 0, 2, 0);
+    node_editor_link(editor, 2, 0, 3, 0);
+    node_editor_link(editor, 1, 0, 4, 0);
+    node_editor_link(editor, 1, 0, 4, 1);
+    node_editor_link(editor, 3, 0, 4, 2);
+    node_editor_link(editor, 3, 0, 5, 0);
+//#endif
 }
 
 int nodeclick=0;
@@ -523,7 +529,7 @@ node_editor(struct nk_context *ctx)
                     //char Pi[6]="1.072";  char Pd[6]="0.107";   char Po[6]="0.965";
                     //sprintf(it->values.refdes, "%d", it->ID);
                     //strncpy(it->values.refdes, refdes, 6);
-                    strncpy(refdes, it->values.refdes, 7);
+                    strncpy(refdes, it->valuesPtr->refdes, 7);
 #if 0
                     // convert from double to string
                     snprintf(Vi, 6, "%g", it->values.Vi[0]);
@@ -539,7 +545,7 @@ node_editor(struct nk_context *ctx)
                     snprintf(Po, 6, "%g", it->values.Po);
 #endif
                     static int LDin=1;
-                    nTy* nd=&it->values; // so can use nd-> istead of it->values.
+                    nTy* nd=it->valuesPtr; // so can use nd-> istead of it->valuesPtr.
 #define STEP 0.1
 #define SPP  0.1
 
@@ -595,7 +601,7 @@ node_editor(struct nk_context *ctx)
                        if (voltReg_radio == SR) strcpy(it->name, "SR");
                     }
 
-                    strncpy(it->values.refdes, refdes, 7);
+                    strncpy(it->valuesPtr->refdes, refdes, 7);
 #if 0
                     // convert back from string to double
                     char* endPtr;
@@ -806,7 +812,7 @@ node_editor(struct nk_context *ctx)
                     saveINI(nodedit);
                     printf("calc INI file\n");
                     calcINI();
-                    printf("load INI file\n");
+                    printf("load INI results file\n");
                     loadINIres(nodedit);
                 }
                 if (nk_contextual_item_label(ctx, grid_option[nodedit->show_grid],NK_TEXT_CENTERED))

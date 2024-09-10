@@ -1102,6 +1102,7 @@ int saveINIres(nTy* nPtr, int nodes) {
 } // int saveINIres(nTy* nPtr, int nodes)
 
 int freeMem() {
+   //printf("freeMem nPtr:%p\n", nPtr);
    free(nPtr);
    iniparser_freedict(graphPtr);
    return 0;
