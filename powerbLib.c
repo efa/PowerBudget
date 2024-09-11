@@ -89,6 +89,7 @@ int loadINI(char* graphFile, int* sectPtr) {
    printf("Loads in file:%d\n", ld);
    int nt=in+sr+lr+rs+ld;
    //printf("Tot Sect:%d Nodes:%d\n", sect, nt);
+   printf("Tot Nodes:%d\n", nt);
    printf("\n");
 
    // allocate space for nodes
@@ -163,7 +164,7 @@ int loadINI(char* graphFile, int* sectPtr) {
       }
       char sectTypePtr[3]="";
       strncpy(sectTypePtr, sectNamePtr, 2); sectTypePtr[2]='\0';
-      char sectKeyPtr[11]="";
+      char sectKeyPtr[15]="";
 
       if (strcasecmp(sectTypePtr, "sr")==0) { // SR only
          strcpy(nPtr[s].name, sectNamePtr);

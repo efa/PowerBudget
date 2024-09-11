@@ -383,6 +383,9 @@ node_editor_init(struct node_editor *editor)
     editor->show_grid = nk_true;
 }
 
+#define MaxNodes 50
+int nodes=-1;
+
 // create the IN node
 void node_editor_start(struct node_editor *editor) {
     int id;
@@ -390,48 +393,48 @@ void node_editor_start(struct node_editor *editor) {
     //nTy* nodePtr;
     char name[5];
 
-    int sect=6;
+    int sect=MaxNodes;
     //printf("nPtr:%p\n", nPtr);
     nPtr=malloc(sect*sizeof(nTy)); // allocate space for sect nTy
     //printf("nPtr:%p\n", nPtr);
 
-    strcpy(name, "IN"); sect=0;
+    strcpy(name, "IN"); nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
-    initNodeData(&nPtr[sect]);
-    strcpy(nPtr[sect].name, name); nPtr[sect].type=0; strcpy(nPtr[sect].label, name); nPtr[sect].Vo=5;
-    fillNodeData(id, &nPtr[sect]);
+    initNodeData(&nPtr[nodes]);
+    strcpy(nPtr[nodes].name, name); nPtr[nodes].type=0; strcpy(nPtr[nodes].label, name); nPtr[nodes].Vo=5;
+    fillNodeData(id, &nPtr[nodes]);
 
 //#if 0
-    strcpy(name, "SR1"); sect++;
+    strcpy(name, "SR1"); nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
-    initNodeData(&nPtr[sect]);
-    strcpy(nPtr[sect].name, name); nPtr[sect].type=1; strcpy(nPtr[sect].label,"Buck"); strcpy(nPtr[sect].refdes,"U14");
-    strcpy(nPtr[sect].in[0],"IN"); nPtr[sect].yeld=0.9; nPtr[sect].Vo=1.8;
-    fillNodeData(id, &nPtr[sect]);
-    strcpy(name, "LR1"); sect++;
+    initNodeData(&nPtr[nodes]);
+    strcpy(nPtr[nodes].name, name); nPtr[nodes].type=1; strcpy(nPtr[nodes].label,"Buck"); strcpy(nPtr[nodes].refdes,"U14");
+    strcpy(nPtr[nodes].in[0],"IN"); nPtr[nodes].yeld=0.9; nPtr[nodes].Vo=1.8;
+    fillNodeData(id, &nPtr[nodes]);
+    strcpy(name, "LR1"); nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
-    initNodeData(&nPtr[sect]);
-    strcpy(nPtr[sect].name, name); nPtr[sect].type=2; strcpy(nPtr[sect].label,"LDO1"); strcpy(nPtr[sect].refdes,"U12");
-    strcpy(nPtr[sect].in[0],"IN"); nPtr[sect].Iadj=0.005; nPtr[sect].Vo=3.6;
-    fillNodeData(id, &nPtr[sect]);
-    strcpy(name, "LR2"); sect++;
+    initNodeData(&nPtr[nodes]);
+    strcpy(nPtr[nodes].name, name); nPtr[nodes].type=2; strcpy(nPtr[nodes].label,"LDO1"); strcpy(nPtr[nodes].refdes,"U12");
+    strcpy(nPtr[nodes].in[0],"IN"); nPtr[nodes].Iadj=0.005; nPtr[nodes].Vo=3.6;
+    fillNodeData(id, &nPtr[nodes]);
+    strcpy(name, "LR2"); nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
-    initNodeData(&nPtr[sect]);
-    strcpy(nPtr[sect].name, name); nPtr[sect].type=2; strcpy(nPtr[sect].label,"LDO2"); strcpy(nPtr[sect].refdes,"U13");
-    strcpy(nPtr[sect].in[0],"LR1"); nPtr[sect].Iadj=0.005; nPtr[sect].Vo=3.3L;
-    fillNodeData(id, &nPtr[sect]);
-    strcpy(name, "LD1"); sect++;
+    initNodeData(&nPtr[nodes]);
+    strcpy(nPtr[nodes].name, name); nPtr[nodes].type=2; strcpy(nPtr[nodes].label,"LDO2"); strcpy(nPtr[nodes].refdes,"U13");
+    strcpy(nPtr[nodes].in[0],"LR1"); nPtr[nodes].Iadj=0.005; nPtr[nodes].Vo=3.3L;
+    fillNodeData(id, &nPtr[nodes]);
+    strcpy(name, "LD1"); nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 3, 0);
-    initNodeData(&nPtr[sect]);
-    strcpy(nPtr[sect].name, name); nPtr[sect].type=3; strcpy(nPtr[sect].label,"SpW"); strcpy(nPtr[sect].refdes,"U20");
-    strcpy(nPtr[sect].in[0],"SR1"); nPtr[sect].Ii[0]=0.528; strcpy(nPtr[sect].in[1],"SR1"); nPtr[sect].Ii[1]=0.008; strcpy(nPtr[sect].in[2],"LR2"); nPtr[sect].Ii[2]=0.317;
-    fillNodeData(id, &nPtr[sect]);
-    strcpy(name, "LD2"); sect++;
+    initNodeData(&nPtr[nodes]);
+    strcpy(nPtr[nodes].name, name); nPtr[nodes].type=3; strcpy(nPtr[nodes].label,"SpW"); strcpy(nPtr[nodes].refdes,"U20");
+    strcpy(nPtr[nodes].in[0],"SR1"); nPtr[nodes].Ii[0]=0.528; strcpy(nPtr[nodes].in[1],"SR1"); nPtr[nodes].Ii[1]=0.008; strcpy(nPtr[nodes].in[2],"LR2"); nPtr[nodes].Ii[2]=0.317;
+    fillNodeData(id, &nPtr[nodes]);
+    strcpy(name, "LD2"); nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 1, 0);
-    initNodeData(&nPtr[sect]);
-    strcpy(nPtr[sect].name, name); nPtr[sect].type=3; strcpy(nPtr[sect].label,"LVDS"); strcpy(nPtr[sect].refdes,"U6");
-    strcpy(nPtr[sect].in[0],"LR2"); nPtr[sect].Ii[0]=0.0354;
-    fillNodeData(id, &nPtr[sect]);
+    initNodeData(&nPtr[nodes]);
+    strcpy(nPtr[nodes].name, name); nPtr[nodes].type=3; strcpy(nPtr[nodes].label,"LVDS"); strcpy(nPtr[nodes].refdes,"U6");
+    strcpy(nPtr[nodes].in[0],"LR2"); nPtr[nodes].Ii[0]=0.0354;
+    fillNodeData(id, &nPtr[nodes]);
     node_editor_link(editor, 0, 0, 1, 0);
     node_editor_link(editor, 0, 0, 2, 0);
     node_editor_link(editor, 2, 0, 3, 0);
@@ -793,12 +796,20 @@ node_editor(struct nk_context *ctx)
                       nodeclick=0;
                    }
                 }
-                if (nk_contextual_item_label(ctx, "New Reg", NK_TEXT_CENTERED))
-                    node_editor_add(nodedit, "Reg", nk_rect(400, 260, NODE_WIDTH, NODE_HEIGHT),
+                if (nk_contextual_item_label(ctx, "New Reg", NK_TEXT_CENTERED)) {
+                    int idn=node_editor_add(nodedit, "Reg", nk_rect(400, 260, NODE_WIDTH, NODE_HEIGHT),
                             nk_rgb(255, 255, 255), 1, 1);
-                if (nk_contextual_item_label(ctx, "New Load", NK_TEXT_CENTERED))
-                    node_editor_add(nodedit, "LDx", nk_rect(400, 260, NODE_WIDTH, NODE_HEIGHT),
+                    nodes++;
+                    initNodeData(&nPtr[nodes]);
+                    fillNodeData(idn, &nPtr[nodes]);
+                }
+                if (nk_contextual_item_label(ctx, "New Load", NK_TEXT_CENTERED)) {
+                    int idn=node_editor_add(nodedit, "LDx", nk_rect(400, 260, NODE_WIDTH, NODE_HEIGHT),
                             nk_rgb(255, 255, 255), 1, 0);
+                    nodes++;
+                    initNodeData(&nPtr[nodes]);
+                    fillNodeData(idn, &nPtr[nodes]);
+                }
                 if (nk_contextual_item_label(ctx, "Load INI", NK_TEXT_CENTERED)) {
                     printf("load INI file\n");
                     loadINIres(nodedit);
