@@ -61,6 +61,16 @@
 
 u08 dbgLev=PRINTF;
 
+//int saveINIres(nTy* nPtr, int nodes); // GUI: before call "powerb"
+
+//int calcINI(); // GUI: call to "powerb"
+
+int guiLoadINI(void* nodedit, char* fileName); // GUI: 
+
+int initNodeData(nTy* node); // GUI: 
+
+int fillNodeData(int id, nTy* node); // GUI: 
+
 /* ===============================================================
  *
  *                          EXAMPLE
@@ -134,58 +144,60 @@ int fillNodeData(int id, nTy* valuesPtr) {
    return 0;
 } // int fillNodeData(int id, nTy* valuesPtr)
 
-int saveINI(void* nodedit) {
+#if 0
+int saveINIres(nTy* nPtr, int nodes) {
    struct node_editor* nodeditPtr;
    nodeditPtr=nodedit;
    struct node* nodePtr;
+   nodePtr=nodeditPtr->begin;
+//#endif
+int saveINIres(nTy* nPtr, int nodes) {
    char bufferPtr[5000]="";
    int out=0;
    out+=sprintf(bufferPtr+out, "[BOARD]\n");
    out+=sprintf(bufferPtr+out, "label=%s\n", "ES3");
    out+=sprintf(bufferPtr+out, "\n");
-   nodePtr=nodeditPtr->begin;
-   for (int n=0; n<nodeditPtr->node_count; n++) {
-      int type=nodePtr->valuesPtr->type;
-      //printf("name:'%s' type:%d add:%p\n", nodePtr->valuesPtr->name, type, nodePtr);
-      out+=sprintf(bufferPtr+out, "[%s]\n", nodePtr->valuesPtr->name);
-      out+=sprintf(bufferPtr+out, "label=%s\n", nodePtr->valuesPtr->label);
+   for (int n=0; n<nodes; n++, nPtr=nPtr->next) {
+      int type=nPtr->type;
+      //printf("name:'%s' type:%d add:%p\n", nPtr->name, type, nodePtr);
+      out+=sprintf(bufferPtr+out, "[%s]\n", nPtr->name);
+      out+=sprintf(bufferPtr+out, "label=%s\n", nPtr->label);
       if (type!=0) { // not for IN
-         out+=sprintf(bufferPtr+out, "refdes=%s\n", nodePtr->valuesPtr->refdes);
+         out+=sprintf(bufferPtr+out, "refdes=%s\n", nPtr->refdes);
       }
       if (type==3) { // LDx
          for (int i=0; i<MaxIns; i++) {
             //printf("n:%d i:%d\n", n, i);
-            if (nodePtr->valuesPtr->in[i][0]=='\0') continue; // LDx can have more than one
-            out+=sprintf(bufferPtr+out, "f%d=%s\n", i, nodePtr->valuesPtr->in[i]);
-            out+=sprintf(bufferPtr+out, "V%d=%g\n", i, nodePtr->valuesPtr->Vi[i]);
-            out+=sprintf(bufferPtr+out, "I%d=%g\n", i, nodePtr->valuesPtr->Ii[i]);
-            out+=sprintf(bufferPtr+out, "R%d=%g\n", i, nodePtr->valuesPtr->R[i]);
-            out+=sprintf(bufferPtr+out, "P%d=%g\n", i, nodePtr->valuesPtr->Pi[i]);
+            if (nPtr->in[i][0]=='\0') continue; // LDx can have more than one
+            out+=sprintf(bufferPtr+out, "f%d=%s\n", i, nPtr->in[i]);
+            out+=sprintf(bufferPtr+out, "V%d=%g\n", i, nPtr->Vi[i]);
+            out+=sprintf(bufferPtr+out, "I%d=%g\n", i, nPtr->Ii[i]);
+            out+=sprintf(bufferPtr+out, "R%d=%g\n", i, nPtr->R[i]);
+            out+=sprintf(bufferPtr+out, "P%d=%g\n", i, nPtr->Pi[i]);
          }
-      } else if (type!=-1 && type!=0) { // no BOARD and IN and LDx
-         out+=sprintf(bufferPtr+out, "f0=%s\n", nodePtr->valuesPtr->in[0]);
-         out+=sprintf(bufferPtr+out, "Vi=%g\n", nodePtr->valuesPtr->Vi[0]);
-         out+=sprintf(bufferPtr+out, "Ii=%g\n", nodePtr->valuesPtr->Ii[0]);
-         out+=sprintf(bufferPtr+out, "Pi=%g\n", nodePtr->valuesPtr->Pi[0]);
+      } else if (type!=-1 && type!=0) { // no BOARD, IN, LDx
+         out+=sprintf(bufferPtr+out, "f0=%s\n", nPtr->in[0]);
+         out+=sprintf(bufferPtr+out, "Vi=%g\n", nPtr->Vi[0]);
+         out+=sprintf(bufferPtr+out, "Ii=%g\n", nPtr->Ii[0]);
+         out+=sprintf(bufferPtr+out, "Pi=%g\n", nPtr->Pi[0]);
       }
       if (type!=0) { // IN
-         out+=sprintf(bufferPtr+out, "DV=%g\n", nodePtr->valuesPtr->DV);
-         out+=sprintf(bufferPtr+out, "n=%g\n", nodePtr->valuesPtr->yeld);
-         out+=sprintf(bufferPtr+out, "Iadj=%g\n", nodePtr->valuesPtr->Iadj);
-         out+=sprintf(bufferPtr+out, "Pd=%g\n", nodePtr->valuesPtr->Pd);
+         out+=sprintf(bufferPtr+out, "DV=%g\n", nPtr->DV);
+         out+=sprintf(bufferPtr+out, "n=%g\n", nPtr->yeld);
+         out+=sprintf(bufferPtr+out, "Iadj=%g\n", nPtr->Iadj);
+         out+=sprintf(bufferPtr+out, "Pd=%g\n", nPtr->Pd);
       }
       if (type==0) { // IN
-         out+=sprintf(bufferPtr+out, "V=%g\n", nodePtr->valuesPtr->Vo);
-         out+=sprintf(bufferPtr+out, "I=%g\n", nodePtr->valuesPtr->Io);
-         out+=sprintf(bufferPtr+out, "P=%g\n", nodePtr->valuesPtr->Po);
+         out+=sprintf(bufferPtr+out, "V=%g\n", nPtr->Vo);
+         out+=sprintf(bufferPtr+out, "I=%g\n", nPtr->Io);
+         out+=sprintf(bufferPtr+out, "P=%g\n", nPtr->Po);
       } else if (type!=3) { // LDx
-         out+=sprintf(bufferPtr+out, "Vo=%g\n", nodePtr->valuesPtr->Vo);
-         out+=sprintf(bufferPtr+out, "Io=%g\n", nodePtr->valuesPtr->Io);
-         out+=sprintf(bufferPtr+out, "Po=%g\n", nodePtr->valuesPtr->Po);
+         out+=sprintf(bufferPtr+out, "Vo=%g\n", nPtr->Vo);
+         out+=sprintf(bufferPtr+out, "Io=%g\n", nPtr->Io);
+         out+=sprintf(bufferPtr+out, "Po=%g\n", nPtr->Po);
       }
       out+=sprintf(bufferPtr+out, "\n");
       //printf("buffer[%d]:'\n%s\n'\n", n, bufferPtr);
-      nodePtr=nodePtr->next;
    }
    //printf("\n");
    //printf("buffer:'\n%s\n'\n", bufferPtr);
@@ -199,9 +211,10 @@ int saveINI(void* nodedit) {
 } // int saveINI(void* nodedit)
 
 int calcINI() {
-   system("powerb "DefGuiIniFile);
+   system("powerb "DefGuiIniResFile);
    return 0;
 } // int calcINI()
+#endif
 
 // find the GUI node that point to values nodePtr
 int findGuiNode(void* nodedit, nTy* nodeValPtr) {
@@ -220,12 +233,13 @@ int findGuiNode(void* nodedit, nTy* nodeValPtr) {
    return nodePtr->ID;
 } // int findGuiNode(void* nodedit, nTy* nodeValPtr)
 
-int loadINIres(void* nodedit) {
+int guiLoadINI(void* nodedit, char* fileName) {
    struct node_editor* nodeditPtr;
    nodeditPtr=nodedit;
    struct node* nodePtr;
    // at first remove all existing nodes and links
    printf("removing current nodes ...\n");
+#if 0
    int pass=0;
    int found;
    do {
@@ -240,6 +254,8 @@ int loadINIres(void* nodedit) {
       pass++;
    } while (found); // removed all nodes
    //printf("found:%d pass:%d\n", found, pass);
+#endif
+   nodeDelAll(nodeditPtr);
    freeMem(); // free values
    printf("cleared\n");
    //printf("\n");
@@ -248,30 +264,31 @@ int loadINIres(void* nodedit) {
    node_editor_init(&nodeEditor);
    nodeEditor.initialized = 1;
    int id;
-   //nTy node;
    //char name[5];
 
    //int ret;
    int sect;
    printf("loading ...\n");
-   loadINI(DefCliIniResFile, &sect);
+   loadINI(fileName, &sect);
    printf("loaded %d sections, %d nodes\n", sect, sect-1);
    printf("\n");
    //showStructData();
 
    // create GUI nodes
    printf("Creating GUI nodes ...\n");
-   for (int n=0; n<sect; n++) {
-      //printf("graph n:%02d node:'%s'\n", n, nPtr[n].name);
-      //if (!strcasecmp(nPtr[n].name, "board")) continue;
-      if (nPtr[n].type==-1) continue; // BOARD
+   nTy* nPtr=nList.first;
+   for (int n=0; n<sect; n++, nPtr=nPtr->next) {
+      //printf("graph n:%02d node:'%s'\n", n, nPtr->name);
+      //if (!strcasecmp(nPtr->name, "board")) continue;
+      if (nPtr->type==-1) continue; // BOARD
       int in=1, out=1;
-      if (!strcasecmp(nPtr[n].name, "in")) in=0;
-      if (!strncasecmp(nPtr[n].name, "ld", 2)) out=0;
-      id=node_editor_add(nodeditPtr, nPtr[n].name, nk_rect(OFFSET+(3-nPtr[n].col)*(NODE_WIDTH+SPACING), OFFSET+nPtr[n].row/3*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), in, out);
+      if (!strcasecmp(nPtr->name, "in")) in=0;
+      if (!strncasecmp(nPtr->name, "ld", 2)) out=0;
+      //printf("graph n:%02d node:'%s' col:%d row:%d\n", n, nPtr->name, nPtr->col, nPtr->row);
+      id=node_editor_add(nodeditPtr, nPtr->name, nk_rect(OFFSET+(3-nPtr->col)*(NODE_WIDTH+SPACING), OFFSET+nPtr->row*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), in, out);
       //printf("created GUI node:%d\n", id);
-      //printf("values addr node:%p\n", &nPtr[n]);
-      fillNodeData(id, &nPtr[n]);
+      //printf("values addr node:%p\n", nPtr);
+      fillNodeData(id, nPtr);
    }
 
 //#if 0

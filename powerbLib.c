@@ -24,11 +24,70 @@
 #include "powerbLib.h"
 #include "fileIo.h"
 
-nTy* nPtr; // vector of struct/nodes ptr
+//nTy* nPtr; // vector of struct/nodes ptr
+nListTy nList; // list of node values, needed for GUI
 int sect;  // number of sections/nodes
 dictionary* graphPtr; // INI file dictionary ptr
-
 nTy* missFrom=NULL; // take note of node to complete later
+
+// init the double linked node list
+void nListInit(nListTy* nListPtr) {
+   if (nListPtr==NULL) return;
+   nListPtr->first=NULL;
+   nListPtr->last=NULL;
+   nListPtr->nodeCnt=0;
+   nListPtr->init=1;
+   return;
+} // nListInit(nListTy* nListPtr)
+
+// add an empty node to the double linked list as last element, return its pointer
+nTy* nListAdd(nListTy* nListPtr) {
+   if (nListPtr==NULL) return NULL;
+   nTy* nodePtr;
+   //printf("nListPtr->nodeCnt:%d\n", nListPtr->nodeCnt);
+   nodePtr = malloc(sizeof(nTy));
+   nListPtr->nodeCnt++;
+   //printf("nListPtr[%d]:%p\n", nListPtr->nodeCnt-1, nodePtr);
+   if (!nListPtr->first) { // first node
+      nodePtr->next = NULL;
+      nodePtr->prev = NULL;
+      nListPtr->first = nodePtr;
+      nListPtr->last = nodePtr;
+   } else { // next nodes
+      nodePtr->prev = nListPtr->last;
+      if (nListPtr->last) // can remove condition
+         nListPtr->last->next = nodePtr;
+      nodePtr->next = NULL;
+      nListPtr->last = nodePtr;
+   }
+   //printf("nodePtr:%p\n", nodePtr);
+   //printf("nodeCnt:%d\n", nListPtr->nodeCnt);
+   //printf("\n");
+   return nodePtr;
+} // nTy* nListAdd(nList* nListPtr)
+
+// delete a node from the double linked list
+void nListDel(nListTy* nListPtr, nTy* nodePtr) {
+   if (nListPtr==NULL || nodePtr==NULL) return;
+   if (nListPtr->nodeCnt>0) {
+      //printf("delete node:%p\n", nodePtr);
+      // remove from the linked list
+      //node_pop(nListPtr, nodePtr);
+      if (nodePtr->next) // not last
+         nodePtr->next->prev = nodePtr->prev; // can be NULL if first
+      if (nodePtr->prev) // not first
+         nodePtr->prev->next = nodePtr->next; // can be NULL if last
+      if (nListPtr->last == nodePtr) // last
+         nListPtr->last = nodePtr->prev;
+      if (nListPtr->first == nodePtr) // first
+         nListPtr->first = nodePtr->next;
+      nodePtr->next = NULL; // just in case
+      nodePtr->prev = NULL; // just in case
+      free(nodePtr);
+      nListPtr->nodeCnt--;
+   }
+   return;
+} // nListDel(nListTy* nListPtr, nTy* nodePtr)
 
 int loadINI(char* graphFile, int* sectPtr) {
    // parse ini file
@@ -88,93 +147,97 @@ int loadINI(char* graphFile, int* sectPtr) {
    printf("Resistor serie in file:%d\n", rs);
    printf("Loads in file:%d\n", ld);
    int nt=in+sr+lr+rs+ld;
-   //printf("Tot Sect:%d Nodes:%d\n", sect, nt);
-   printf("Tot Nodes:%d\n", nt);
+   printf("Tot Sections:%d Nodes:%d\n", sect, nt);
+   //printf("Tot Nodes:%d\n", nt);
    printf("\n");
 
    // allocate space for nodes
-   nPtr = malloc((nt+1)*sizeof(nTy)); // keep space for BOARD in [0]
+   //nPtr = malloc((nt+1)*sizeof(nTy)); // keep space for BOARD in [0]
+   // init an empty node list, needed to support GUI
+   nListInit(&nList);
 
-   // fill struct with file data and check valid values
+   // 1st pass, fill struct with file data and check valid values
+   nTy* nPtr;
    for (int s=0; s<sect; s++) { // INI sections = # nodes
       //printf("s:%d\n", s);
       const char* sectNamePtr=iniparser_getsecname(graphPtr, s);
+      nPtr=nListAdd(&nList);
       if (strcasecmp(sectNamePtr, "board")==0) { // BOARD only
-         strcpy(nPtr[s].name, sectNamePtr);
-         nPtr[s].type=-1;
-         strcpy(nPtr[s].label, iniparser_getstring(graphPtr, "BOARD:label", ""));
-         strcpy(nPtr[s].refdes, "");
-         nPtr[s].col=-1;
-         nPtr[s].row=-1;
+         strcpy(nPtr->name, sectNamePtr);
+         nPtr->type=-1;
+         strcpy(nPtr->label, iniparser_getstring(graphPtr, "BOARD:label", ""));
+         strcpy(nPtr->refdes, "");
+         nPtr->col=-1;
+         nPtr->row=-1;
          for (int i=0; i<MaxIns; i++) {
-            nPtr[s].from[i]=NULL;
-            strcpy(nPtr[s].in[i], "");
-            nPtr[s].Vi[i]=0;
-            nPtr[s].Ii[i]=0;
-            nPtr[s].Pi[i]=0;
-            nPtr[s].R[i]=0;
+            nPtr->from[i]=NULL;
+            strcpy(nPtr->in[i], "");
+            nPtr->Vi[i]=0;
+            nPtr->Ii[i]=0;
+            nPtr->Pi[i]=0;
+            nPtr->R[i]=0;
          }
-         nPtr[s].yeld=0;
-         nPtr[s].Iadj=0;
-         nPtr[s].DV=0;
-         nPtr[s].Pd=0;
-         nPtr[s].Vo=0;
-         nPtr[s].Io=0;
-         nPtr[s].Po=0;
+         nPtr->yeld=0;
+         nPtr->Iadj=0;
+         nPtr->DV=0;
+         nPtr->Pd=0;
+         nPtr->Vo=0;
+         nPtr->Io=0;
+         nPtr->Po=0;
          for (int t=0; t<MaxOut; t++) {
-            nPtr[s].to[t]=NULL;
+            nPtr->to[t]=NULL;
          }
-         nPtr[s].out=0;
-      }
+         nPtr->out=0;
+      } // BOARD only
 
       if (strcasecmp(sectNamePtr, "in")==0) { // IN only
-         strcpy(nPtr[s].name, sectNamePtr);
-         nPtr[s].type=0;
-         strcpy(nPtr[s].label, iniparser_getstring(graphPtr, "IN:label", ""));
-         strcpy(nPtr[s].refdes, "");
-         nPtr[s].col=-1;
-         nPtr[s].row=-1;
+         strcpy(nPtr->name, sectNamePtr);
+         nPtr->type=0;
+         strcpy(nPtr->label, iniparser_getstring(graphPtr, "IN:label", ""));
+         strcpy(nPtr->refdes, "");
+         nPtr->col=-1;
+         nPtr->row=-1;
          for (int i=0; i<MaxIns; i++) {
-            nPtr[s].from[i]=NULL;
-            strcpy(nPtr[s].in[i], "");
-            nPtr[s].Vi[i]=0;
-            nPtr[s].Ii[i]=0;
-            nPtr[s].Pi[i]=0;
-            nPtr[s].R[i]=0;
+            nPtr->from[i]=NULL;
+            strcpy(nPtr->in[i], "");
+            nPtr->Vi[i]=0;
+            nPtr->Ii[i]=0;
+            nPtr->Pi[i]=0;
+            nPtr->R[i]=0;
          }
-         nPtr[s].yeld=0;
-         nPtr[s].Iadj=0;
-         nPtr[s].DV=0;
-         nPtr[s].Pd=0;
-         nPtr[s].Vo=iniparser_getdouble(graphPtr, "IN:V", 0);
-         nPtr[s].Io=iniparser_getdouble(graphPtr, "IN:I", 0);
-         nPtr[s].Po=iniparser_getdouble(graphPtr, "IN:P", 0);
+         nPtr->yeld=0;
+         nPtr->Iadj=0;
+         nPtr->DV=0;
+         nPtr->Pd=0;
+         nPtr->Vo=iniparser_getdouble(graphPtr, "IN:V", 0);
+         nPtr->Io=iniparser_getdouble(graphPtr, "IN:I", 0);
+         nPtr->Po=iniparser_getdouble(graphPtr, "IN:P", 0);
          for (int t=0; t<MaxOut; t++) {
-            nPtr[s].to[t]=NULL;
+            nPtr->to[t]=NULL;
          }
-         nPtr[s].out=0;
-         if (nPtr[s].Vo==0) {
+         nPtr->out=0;
+         if (nPtr->Vo==0) {
             printf("Invalid input for IN. Quit\n");
             return -1;
          }
          for (int t=0; t<MaxOut; t++) {
-            nPtr[s].to[t]=NULL;
+            nPtr->to[t]=NULL;
          }
-         nPtr[s].out=0;
-      }
+         nPtr->out=0;
+      } // IN only
+
       char sectTypePtr[3]="";
       strncpy(sectTypePtr, sectNamePtr, 2); sectTypePtr[2]='\0';
       char sectKeyPtr[15]="";
-
       if (strcasecmp(sectTypePtr, "sr")==0) { // SR only
-         strcpy(nPtr[s].name, sectNamePtr);
-         nPtr[s].type=1;
+         strcpy(nPtr->name, sectNamePtr);
+         nPtr->type=1;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":label");
-         strcpy(nPtr[s].label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         strcpy(nPtr->label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":refdes");
-         strcpy(nPtr[s].refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
-         nPtr[s].col=-1;
-         nPtr[s].row=-1;
+         strcpy(nPtr->refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         nPtr->col=-1;
+         nPtr->row=-1;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":f0");
          const char* strPtr=iniparser_getstring(graphPtr, sectKeyPtr, NULL);
          if (strPtr==NULL) {
@@ -187,56 +250,56 @@ int loadINI(char* graphFile, int* sectPtr) {
             printf("Node:'%s' from:LDn. Quit\n", sectNamePtr);
             return -1;
          }
-         nPtr[s].from[0]=NULL;
-         strcpy(nPtr[s].in[0], strPtr);
+         nPtr->from[0]=NULL;
+         strcpy(nPtr->in[0], strPtr);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Vi");
-         nPtr[s].Vi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Vi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Ii");
-         nPtr[s].Ii[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Ii[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Pi");
-         nPtr[s].Pi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Pi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":R");
-         nPtr[s].R[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->R[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          for (int i=1; i<MaxIns; i++) {
-            nPtr[s].from[i]=NULL;
-            strcpy(nPtr[s].in[i], "");
-            nPtr[s].Vi[i]=0;
-            nPtr[s].Ii[i]=0;
-            nPtr[s].Pi[i]=0;
-            nPtr[s].R[i]=0;
+            nPtr->from[i]=NULL;
+            strcpy(nPtr->in[i], "");
+            nPtr->Vi[i]=0;
+            nPtr->Ii[i]=0;
+            nPtr->Pi[i]=0;
+            nPtr->R[i]=0;
          }
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":n");
-         nPtr[s].yeld=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
-         nPtr[s].Iadj=0;
+         nPtr->yeld=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Iadj=0;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":DV");
-         nPtr[s].DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Pd");
-         nPtr[s].Pd=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Pd=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Vo");
-         nPtr[s].Vo=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Vo=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Io");
-         nPtr[s].Io=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Io=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Po");
-         nPtr[s].Po=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Po=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          for (int t=0; t<MaxOut; t++) {
-            nPtr[s].to[t]=NULL;
+            nPtr->to[t]=NULL;
          }
-         nPtr[s].out=0;
-         if (nPtr[s].Vo==0) {
+         nPtr->out=0;
+         if (nPtr->Vo==0) {
             printf("Invalid input for SR:'%s'. Quit\n", sectNamePtr);
             return -1;
          }
-      }
+      } // SR only
 
       if (strcasecmp(sectTypePtr, "lr")==0) { // LR only
-         strcpy(nPtr[s].name, sectNamePtr);
-         nPtr[s].type=2;
+         strcpy(nPtr->name, sectNamePtr);
+         nPtr->type=2;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":label");
-         strcpy(nPtr[s].label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         strcpy(nPtr->label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":refdes");
-         strcpy(nPtr[s].refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
-         nPtr[s].col=-1;
-         nPtr[s].row=-1;
+         strcpy(nPtr->refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         nPtr->col=-1;
+         nPtr->row=-1;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":f0");
          const char* strPtr=iniparser_getstring(graphPtr, sectKeyPtr, NULL);
          if (strPtr==NULL) {
@@ -249,58 +312,58 @@ int loadINI(char* graphFile, int* sectPtr) {
             printf("Node:'%s' from:LDn. Quit\n", sectNamePtr);
             return -1;
          }
-         nPtr[s].from[0]=NULL;
-         strcpy(nPtr[s].in[0], strPtr);
+         nPtr->from[0]=NULL;
+         strcpy(nPtr->in[0], strPtr);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Vi");
-         nPtr[s].Vi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Vi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Ii");
-         nPtr[s].Ii[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Ii[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Pi");
-         nPtr[s].Pi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Pi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":R");
-         nPtr[s].R[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->R[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          for (int i=1; i<MaxIns; i++) {
-            nPtr[s].from[i]=NULL;
-            strcpy(nPtr[s].in[i], "");
-            nPtr[s].Vi[i]=0;
-            nPtr[s].Ii[i]=0;
-            nPtr[s].Pi[i]=0;
-            nPtr[s].R[i]=0;
+            nPtr->from[i]=NULL;
+            strcpy(nPtr->in[i], "");
+            nPtr->Vi[i]=0;
+            nPtr->Ii[i]=0;
+            nPtr->Pi[i]=0;
+            nPtr->R[i]=0;
          }
-         nPtr[s].yeld=0;
+         nPtr->yeld=0;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Iadj");
-         nPtr[s].Iadj=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Iadj=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":DV");
-         nPtr[s].DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Pd");
-         nPtr[s].Pd=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Pd=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":n");
-         nPtr[s].yeld=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->yeld=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Vo");
-         nPtr[s].Vo=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Vo=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Io");
-         nPtr[s].Io=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Io=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Po");
-         nPtr[s].Po=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Po=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          for (int t=0; t<MaxOut; t++) {
-            nPtr[s].to[t]=NULL;
+            nPtr->to[t]=NULL;
          }
-         nPtr[s].out=0;
-         if (nPtr[s].Vo==0) {
+         nPtr->out=0;
+         if (nPtr->Vo==0) {
             printf("Invalid input for LR:'%s', miss Vo. Quit\n", sectNamePtr);
             return -1;
          }
-      }
+      } // LR only
 
       if (strcasecmp(sectTypePtr, "rs")==0) { // RS only
-         strcpy(nPtr[s].name, sectNamePtr);
-         nPtr[s].type=4;
+         strcpy(nPtr->name, sectNamePtr);
+         nPtr->type=4;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":label");
-         strcpy(nPtr[s].label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         strcpy(nPtr->label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":refdes");
-         strcpy(nPtr[s].refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
-         nPtr[s].col=-1;
-         nPtr[s].row=-1;
+         strcpy(nPtr->refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         nPtr->col=-1;
+         nPtr->row=-1;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":f0");
          const char* strPtr=iniparser_getstring(graphPtr, sectKeyPtr, NULL);
          if (strPtr==NULL) {
@@ -313,59 +376,59 @@ int loadINI(char* graphFile, int* sectPtr) {
             printf("Node:'%s' from:LDn. Quit\n", sectNamePtr);
             return -1;
          }
-         nPtr[s].from[0]=NULL;
-         strcpy(nPtr[s].in[0], strPtr);
+         nPtr->from[0]=NULL;
+         strcpy(nPtr->in[0], strPtr);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Vi");
-         nPtr[s].Vi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Vi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Ii");
-         nPtr[s].Ii[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Ii[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Pi");
-         nPtr[s].Pi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Pi[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":R");
-         nPtr[s].R[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->R[0]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          for (int i=1; i<MaxIns; i++) {
-            nPtr[s].from[i]=NULL;
-            strcpy(nPtr[s].in[i], "");
-            nPtr[s].Vi[i]=0;
-            nPtr[s].Ii[i]=0;
-            nPtr[s].Pi[i]=0;
-            nPtr[s].R[i]=0;
+            nPtr->from[i]=NULL;
+            strcpy(nPtr->in[i], "");
+            nPtr->Vi[i]=0;
+            nPtr->Ii[i]=0;
+            nPtr->Pi[i]=0;
+            nPtr->R[i]=0;
          }
-         nPtr[s].yeld=0;
-         nPtr[s].Iadj=0;
+         nPtr->yeld=0;
+         nPtr->Iadj=0;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":DV");
-         nPtr[s].DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->DV=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Pd");
-         nPtr[s].Pd=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Pd=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Vo");
-         nPtr[s].Vo=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Vo=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Io");
-         nPtr[s].Io=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Io=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":Po");
-         nPtr[s].Po=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+         nPtr->Po=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          for (int t=0; t<MaxOut; t++) {
-            nPtr[s].to[t]=NULL;
+            nPtr->to[t]=NULL;
          }
-         nPtr[s].out=0;
-         if (nPtr[s].R[0]==0) {
+         nPtr->out=0;
+         if (nPtr->R[0]==0) {
             printf("Invalid input for RS:'%s', miss R. Quit\n", sectNamePtr);
             return -1;
          }
-         if (nPtr[s].R[0]>MaxRsValue) {
+         if (nPtr->R[0]>MaxRsValue) {
             printf("Invalid input for RS:'%s'. Quit\n", sectNamePtr);
             return -1;
          }
-      }
+      } // RS only
 
       if (strcasecmp(sectTypePtr,"ld")==0) { // LD only
-         strcpy(nPtr[s].name, sectNamePtr);
-         nPtr[s].type=3;
+         strcpy(nPtr->name, sectNamePtr);
+         nPtr->type=3;
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":label");
-         strcpy(nPtr[s].label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         strcpy(nPtr->label, iniparser_getstring(graphPtr, sectKeyPtr, ""));
          strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":refdes");
-         strcpy(nPtr[s].refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
-         nPtr[s].col=-1;
-         nPtr[s].row=-1;
+         strcpy(nPtr->refdes, iniparser_getstring(graphPtr, sectKeyPtr, ""));
+         nPtr->col=-1;
+         nPtr->row=-1;
          for (int i=0; i<MaxIns; i++) {
             //printf("i:%d\n", i);
             char snPtr[2];
@@ -378,12 +441,12 @@ int loadINI(char* graphFile, int* sectPtr) {
                return -1;
             }
             if (strPtr==NULL) { // at least one input from
-               nPtr[s].from[i]=NULL;
-               strcpy(nPtr[s].in[i], "");
-               nPtr[s].Vi[i]=0;
-               nPtr[s].Ii[i]=0;
-               nPtr[s].Pi[i]=0;
-               nPtr[s].R[i]=0;
+               nPtr->from[i]=NULL;
+               strcpy(nPtr->in[i], "");
+               nPtr->Vi[i]=0;
+               nPtr->Ii[i]=0;
+               nPtr->Pi[i]=0;
+               nPtr->R[i]=0;
                //printf("Node:'%s' continue\n", sectNamePtr);
                continue;
             }
@@ -394,41 +457,42 @@ int loadINI(char* graphFile, int* sectPtr) {
                printf("Node:'%s' from:LDn. Quit\n", sectNamePtr);
                return -1;
             }
-            nPtr[s].from[i]=NULL;
-            strcpy(nPtr[s].in[i], strPtr);
+            nPtr->from[i]=NULL;
+            strcpy(nPtr->in[i], strPtr);
             strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":V"); strcat(sectKeyPtr, snPtr);
-            nPtr[s].Vi[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+            nPtr->Vi[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
             strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":I"); strcat(sectKeyPtr, snPtr);
-            nPtr[s].Ii[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+            nPtr->Ii[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
             strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":P"); strcat(sectKeyPtr, snPtr);
-            nPtr[s].Pi[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+            nPtr->Pi[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
             strcpy(sectKeyPtr, sectNamePtr); strcat(sectKeyPtr, ":R"); strcat(sectKeyPtr, snPtr);
-            nPtr[s].R[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
+            nPtr->R[i]=iniparser_getdouble(graphPtr, sectKeyPtr, 0);
          }
-         nPtr[s].yeld=0;
-         nPtr[s].Iadj=0;
-         nPtr[s].DV=0;
-         nPtr[s].Pd=0;
-         nPtr[s].Vo=0;
-         nPtr[s].Io=0;
-         nPtr[s].Po=0;
+         nPtr->yeld=0;
+         nPtr->Iadj=0;
+         nPtr->DV=0;
+         nPtr->Pd=0;
+         nPtr->Vo=0;
+         nPtr->Io=0;
+         nPtr->Po=0;
          for (int t=0; t<MaxOut; t++) {
-            nPtr[s].to[t]=NULL;
+            nPtr->to[t]=NULL;
          }
-         nPtr[s].out=0;
-         if (nPtr[s].Ii[0]==0 && nPtr[s].Pi[0]==0 && nPtr[s].R[0]==0) {
+         nPtr->out=0;
+         if (nPtr->Ii[0]==0 && nPtr->Pi[0]==0 && nPtr->R[0]==0) {
             printf("Invalid input for LD:'%s'. Quit\n", sectNamePtr);
             return -1;
          }
-      }
-   }
+      } // LD only
+   } // for (int s=0; s<sect; s++) { // INI sections = # nodes
 
    // 2nd pass to check from names and fill ptrs
    //printf("2nd pass ...\n");
-   for (int s=0; s<sect; s++) { // INI sections = # nodes
-      //printf("node:'%s'\n", nPtr[s].name);
-      //printf("type:'%d'\n", nPtr[s].type);
-      if (nPtr[s].type == 0 || nPtr[s].type == -1) continue; // skip BOARD & IN
+   nPtr=nList.first;
+   for (int s=0; s<sect; s++, nPtr=nPtr->next) { // INI sections = # nodes
+      //printf("node:'%s'\n", nPtr->name);
+      //printf("type:'%d'\n", nPtr->type);
+      if (nPtr->type == 0 || nPtr->type == -1) continue; // skip BOARD & IN
       const char* sectNamePtr=iniparser_getsecname(graphPtr, s);
       char sectKeyPtr[10];
       for (int i=0; i<MaxIns; i++) {
@@ -458,18 +522,19 @@ int loadINI(char* graphFile, int* sectPtr) {
             return -1;
          }
          int srcOK=0;
-         for (int n=0; n<sect; n++) { // check in all section if exist
+         nTy* nodePtr=nList.first;
+         for (int n=0; n<sect; n++, nodePtr=nodePtr->next) { // check in all section if exist
             const char* nodeNamePtr=iniparser_getsecname(graphPtr, n);
             //printf("check nodeNamePtr:'%s'\n", nodeNamePtr);
             if (strcasecmp(strPtr, nodeNamePtr)==0) {
-               //printf("Node:'%s' from:'%s' found\n", nPtr[s].name, strPtr);
+               //printf("Node:'%s' from:'%s' found\n", nPtr->name, strPtr);
                srcOK=1;
-               nPtr[s].from[i]=&(nPtr[n]);
+               nPtr->from[i]=nodePtr;
                // now fill to[] of from node: nPtr[n]
                for (int t=0; t<MaxOut; t++) { // find first free
-                  if (nPtr[n].to[t]!=NULL) continue;
+                  if (nodePtr->to[t]!=NULL) continue;
                   //printf("fill t:%d\n", t);
-                  nPtr[n].to[t]=&(nPtr[s]);
+                  nodePtr->to[t]=nPtr;
                   break;
                }
                break;
@@ -477,7 +542,7 @@ int loadINI(char* graphFile, int* sectPtr) {
          }
          //printf("srcOK:%d\n", srcOK);
          if (srcOK==0) {
-            printf("Node:'%s' from:'%s' not found. Quit\n", nPtr[s].name, strPtr);
+            printf("Node:'%s' from:'%s' not found. Quit\n", nPtr->name, strPtr);
             return -1;
          }
       }
@@ -488,16 +553,17 @@ int loadINI(char* graphFile, int* sectPtr) {
    //printf("3rd pass, discover max depth ...\n");
    int md=0;
    int ml=0;
-   for (int s=0; s<sect; s++) { // INI sections = # nodes
-      if (nPtr[s].type!=3) continue; // only LDx
-      //printf("s:%d node:'%s'\n", s, nPtr[s].name);
+   nPtr=nList.first;
+   for (int s=0; s<sect; s++, nPtr=nPtr->next) { // INI sections = # nodes
+      if (nPtr->type!=3) continue; // only LDx
+      //printf("s:%d node:'%s'\n", s, nPtr->name);
       int d=0;
       for (int i=0; i<MaxIns; i++) { // for every load input
          d=0;
          //printf("input i:%d\n", i);
-         if (nPtr[s].from[i]!=NULL) {
+         if (nPtr->from[i]!=NULL) {
             ml++;
-            nTy* from=nPtr[s].from[i];
+            nTy* from=nPtr->from[i];
             //printf("from:%p\n", from);
             int type=from->type;
             //printf("type:%d\n", type);
@@ -522,20 +588,21 @@ int loadINI(char* graphFile, int* sectPtr) {
    //printf("graph exploration and fill\n");
    int c=0;
    int r=0;
-   for (int s=0; s<sect; s++) { // INI sections = # nodes
+   nPtr=nList.first;
+   for (int s=0; s<sect; s++, nPtr=nPtr->next) { // INI sections = # nodes
       //printf("start s:%d\n", s);
-      if (nPtr[s].type!=3) continue; // explore only from LDx
-      //printf("node:'%- 4s'\n", nPtr[s].name);
+      if (nPtr->type!=3) continue; // explore only from LDx
+      //printf("node:'%- 4s'\n", nPtr->name);
       for (int i=0; i<MaxIns; i++) { // for every load input
          //printf("start input i:%d r:%d\n", i, r);
-         if (nPtr[s].from[i]!=NULL) { // only if there is a connection to this input
-            //printf("c   :% 2d r  :% 2d node:'%- 4s' type:%d addr:%p\n", c, r, nPtr[s].name, nPtr[s].type, &nPtr[s]);
-            //printf("col+:% 2d row:% 2d node:'%- 4s' type:%d addr:%p\n", nPtr[s].col, nPtr[s].row, nPtr[s].name, nPtr[s].type, &nPtr[s]);
-            if (nPtr[s].col==-1) nPtr[s].col=c;
-            if (nPtr[s].row==-1) nPtr[s].row=r;
-            //printf("col+:% 2d row:% 2d node:'%- 4s' type:%d addr:%p\n", nPtr[s].col, nPtr[s].row, nPtr[s].name, nPtr[s].type, &nPtr[s]);
+         if (nPtr->from[i]!=NULL) { // only if there is a connection to this input
+            //printf("c   :% 2d r  :% 2d node:'%- 4s' type:%d addr:%p\n", c, r, nPtr->name, nPtr->type, &nPtr[s]);
+            //printf("col+:% 2d row:% 2d node:'%- 4s' type:%d addr:%p\n", nPtr->col, nPtr->row, nPtr->name, nPtr->type, &nPtr[s]);
+            if (nPtr->col==-1) nPtr->col=c;
+            if (nPtr->row==-1) nPtr->row=r;
+            //printf("col+:% 2d row:% 2d node:'%- 4s' type:%d addr:%p\n", nPtr->col, nPtr->row, nPtr->name, nPtr->type, &nPtr[s]);
             c++;
-            nTy* from=nPtr[s].from[i];
+            nTy* from=nPtr->from[i];
             //printf("start name:'%s'\n", from->name);
             int type=from->type;
             while (type!=0) { // IN
@@ -564,15 +631,17 @@ int loadINI(char* graphFile, int* sectPtr) {
 
 #if 0
    printf("show node matrix data\n");
+   nPtr=nList.first;
    for (int s=0; s<sect; s++) { // INI sections = # nodes
-      //printf("node:'%- 4s'\n", nPtr[s].name);
+      //printf("node:'%- 4s'\n", nPtr->name);
       int maxIn=1;
-      if (nPtr[s].type==3) maxIn=MaxIns;
+      if (nPtr->type==3) maxIn=MaxIns;
       for (int i=0; i<maxIn; i++) { // for every load input
-         if (nPtr[s].type!=3 || nPtr[s].from[i]!=NULL) { // only if there is a connection to this LD input
-            printf("node:%d input:%d name:'%s' col:%d row:%d\n", s, i, nPtr[s].name, nPtr[s].col, nPtr[s].row);
+         if (nPtr->type!=3 || nPtr->from[i]!=NULL) { // only if there is a connection to this LD input
+            printf("node:%d input:%d name:'%s' col:%d row:%d\n", s, i, nPtr->name, nPtr->col, nPtr->row);
          }
       }
+      nPtr=nPtr->next;
    }
    printf("\n");
 #endif
@@ -587,16 +656,17 @@ int loadINI(char* graphFile, int* sectPtr) {
    }
 
    //printf("fill matrix data\n");
-   for (int s=0; s<sect; s++) { // INI sections = # nodes
-      if (nPtr[s].type==-1) continue;
-      //printf("node:'%- 4s'\n", nPtr[s].name);
-      //printf("nPtr[s].col:%d nPtr[s].row:%d\n", nPtr[s].col, nPtr[s].row);
-      node[nPtr[s].col][nPtr[s].row]=&nPtr[s]; // fill matrix
-      if (nPtr[s].type==3) { // LOAD can have more than 1 input
+   nPtr=nList.first;
+   for (int s=0; s<sect; s++, nPtr=nPtr->next) { // INI sections = # nodes
+      if (nPtr->type==-1) continue; // BOARD
+      //printf("node:'%- 4s'\n", nPtr->name);
+      //printf("nPtr->col:%d nPtr->row:%d\n", nPtr->col, nPtr->row);
+      node[nPtr->col][nPtr->row]=nPtr; // fill matrix
+      if (nPtr->type==3) { // LOAD can have more than 1 input
          for (int i=1; i<MaxIns; i++) { // for every LOAD input
-            if (nPtr[s].from[i]!=NULL) { // only if there is a connection to this LD input
-               //printf("node:%d input:%d name:'%s' col:%d row:%d\n", s, i, nPtr[s].name, nPtr[s].col, nPtr[s].row);
-               node[nPtr[s].col][nPtr[s].row+i]=&nPtr[s]; // fill matrix
+            if (nPtr->from[i]!=NULL) { // only if there is a connection to this LD input
+               //printf("node:%d input:%d name:'%s' col:%d row:%d\n", s, i, nPtr->name, nPtr->col, nPtr->row);
+               node[nPtr->col][nPtr->row+i]=nPtr; // fill matrix
             }
          }
       }
@@ -605,8 +675,8 @@ int loadINI(char* graphFile, int* sectPtr) {
 
 #if 0
    printf("show matrix data\n");
-   for (int r=0; r<rows; r++) {
-      for (int c=0; c<cols; c++) {
+   for (int c=0; c<cols; c++) {
+      for (int r=0; r<rows; r++) {
          if (node[c][r]!=NULL)
             printf("col:%d row:%d ptr addr:%p name:'%s'\n", c, r, node[c][r], node[c][r]->name);
       }
@@ -816,34 +886,37 @@ int calcRS(nTy* from, double Io, double* Vo) {
 int calcNodes() {
    // calc section
    printf("calc section ...\n");
-   for (int s=0; s<sect; s++) { // INI sections = # nodes
-      //printf("node:%d type:%d\n", s, nPtr[s].type);
-      if (nPtr[s].type==-1) continue; // board
-      if (nPtr[s].type!=3) continue; // calc only LDx
+   //printf("sect:%d\n", sect);
+   //showStructData();
+   nTy* nPtr=nList.first;
+   for (int s=0; s<sect; s++, nPtr=nPtr->next) { // INI sections = # nodes
+      //printf("node:%d type:%d\n", s, nPtr->type);
+      if (nPtr->type==-1) continue; // board
+      if (nPtr->type!=3) continue; // calc only LDx
       //printf("---\n");
-      //printf("new s:%d node:'%s'\n", s, nPtr[s].name);
+      //printf("new s:%d node:'%s'\n", s, nPtr->name);
       for (int i=0; i<MaxIns; i++) { // for every load input
          //printf("\n");
-         //printf("s:%d node:'%s' node:%p input:%d\n", s, nPtr[s].name, &nPtr[s], i);
+         //printf("s:%d node:'%s' node:%p input:%d\n", s, nPtr->name, &nPtr[s], i);
          //char snPtr[2];
          //sprintf(snPtr, "%d", i);
          nTy* from;
          int type;
          double Vo=0;
-         if (nPtr[s].Vi[i]==0) { // do not know the input voltage
-            if (nPtr[s].from[i]!=NULL) { // only if there is an input connection
-               type=nPtr[s].from[i]->type;
+         if (nPtr->Vi[i]==0) { // do not know the input voltage
+            if (nPtr->from[i]!=NULL) { // only if there is an input connection
+               type=nPtr->from[i]->type;
                if (type==0 || type==1 || type==2) { // IN or regulators
-                  nPtr[s].Vi[i]=nPtr[s].from[i]->Vo; // copy Voltage U=>D
+                  nPtr->Vi[i]=nPtr->from[i]->Vo; // copy Voltage U=>D
                } else { // found RS so need voltage partitor
                   //printf("RS processing ...\n");
-                  calcRS(*nPtr[s].from, nPtr[s].Ii[i], &Vo);
+                  calcRS(*nPtr->from, nPtr->Ii[i], &Vo);
 #if 0
-                  //printf("nPtr[s].name:%s\n", nPtr[s].name);
+                  //printf("nPtr->name:%s\n", nPtr->name);
                   double R[MaxRserie];
                   double Rt=0;
-                  from=nPtr[s].from[i];
-                  //printf("nPtr[s].from[i].name:%s\n", nPtr[s].from[i]->name);
+                  from=nPtr->from[i];
+                  //printf("nPtr->from[i].name:%s\n", nPtr->from[i]->name);
                   //printf("from.name:%s\n", from->name);
                   //R[0]=from->R[0];
                   //printf("R[0]:%g\n", R[0]);
@@ -854,7 +927,7 @@ int calcNodes() {
                      type=from->type;
                      //printf("type:%d\n", type);
                      if (type==4) {
-                        from->Io=nPtr[s].Ii[i];
+                        from->Io=nPtr->Ii[i];
                         R[p]=from->R[0];
                         //printf("R[%d]:%g\n", p, R[p]);
                         double DV=R[p]*from->Io; // deltaV on RS single
@@ -871,15 +944,15 @@ int calcNodes() {
                      from=from->from[0];
                   } // know: from->Io, Ii[0], Rt, Vi; [R[p], DV, Pd]
                   //printf("RS Rt:%g\n", Rt);
-                  double DV=Rt*nPtr[s].Ii[i]; // deltaV tot on RS series
+                  double DV=Rt*nPtr->Ii[i]; // deltaV tot on RS series
                   //printf("tot DV:%g\n", DV);
-                  //nPtr[s].DV=DV;
-                  nPtr[s].Vi[i]=Vi-DV;
-                  double Vp=nPtr[s].Vi[i]; // Voltage at RS series end
+                  //nPtr->DV=DV;
+                  nPtr->Vi[i]=Vi-DV;
+                  double Vp=nPtr->Vi[i]; // Voltage at RS series end
                   //printf("RS Vo:%g\n", Vp);
                   //printf("RS p:%d exploring down to fill single data ...\n", p);
                   int q=p;
-                  from=nPtr[s].from[i];
+                  from=nPtr->from[i];
                   for (p=0; p<q; p++) { // all RS found
                      //printf("from->name:%s\n", from->name);
                      //printf("from->type:%d\n", from->type);
@@ -898,37 +971,37 @@ int calcNodes() {
                   }
 #endif
                } // found RS so need voltage partitor
-               //printf("Vi[%d]:%g V as input for load\n", i, nPtr[s].Vi[i]);
+               //printf("Vi[%d]:%g V as input for load\n", i, nPtr->Vi[i]);
             } else { // no from, so no input connection
-               //printf("nPtr[s].from[i] NULL\n");
-               //nPtr[s].Vi[i]=0;
+               //printf("nPtr->from[i] NULL\n");
+               //nPtr->Vi[i]=0;
                continue;
             }
          }
          //printf("calc i:%d\n", i);
-         if (nPtr[s].R[i]==0 && nPtr[s].Ii[i]!=0) { // know V,I ==> R,P
-            nPtr[s].R[i]=calcR(nPtr[s].Vi[i], nPtr[s].Ii[i]);
-            nPtr[s].Pi[i]=calcP(nPtr[s].Vi[i], nPtr[s].Ii[i]);
+         if (nPtr->R[i]==0 && nPtr->Ii[i]!=0) { // know V,I ==> R,P
+            nPtr->R[i]=calcR(nPtr->Vi[i], nPtr->Ii[i]);
+            nPtr->Pi[i]=calcP(nPtr->Vi[i], nPtr->Ii[i]);
          }
-         if (nPtr[s].Ii[i]==0 && nPtr[s].R[i]!=0) { // know V,R ==> I,P
-            nPtr[s].Ii[i]=calcI(nPtr[s].Vi[i], nPtr[s].R[i]);
-            nPtr[s].Pi[i]=calcP(nPtr[s].Vi[i], nPtr[s].R[i]);
+         if (nPtr->Ii[i]==0 && nPtr->R[i]!=0) { // know V,R ==> I,P
+            nPtr->Ii[i]=calcI(nPtr->Vi[i], nPtr->R[i]);
+            nPtr->Pi[i]=calcP(nPtr->Vi[i], nPtr->R[i]);
          }
-         nPtr[s].Pd+=nPtr[s].Pi[i]; // total dissipation
+         nPtr->Pd+=nPtr->Pi[i]; // total dissipation
 
          // follow graph to root
          //printf("follow graph to root ...\n");
          //printf("s:%d\n", s);
          //printf("following input i:%d\n", i);
-         //printf("name:'%s'\n", nPtr[s].name);
-         from=nPtr[s].from[i];
-         double Io=nPtr[s].Ii[i]; // pass current to node up
+         //printf("name:'%s'\n", nPtr->name);
+         from=nPtr->from[i];
+         double Io=nPtr->Ii[i]; // pass current to node up
          while (from!=NULL) { // IN node
             //printf("\n");
             //printf("name:'%s'\n", from->name);
             //printf("type:%d\n", from->type);
             type=from->type;
-            //printf("s:%d node:'%s' node:%p input:%d from:'%s' type:%d\n", s, nPtr[s].name, &nPtr[s], i, from->name, type);
+            //printf("s:%d node:'%s' node:%p input:%d from:'%s' type:%d\n", s, nPtr->name, &nPtr[s], i, from->name, type);
             int ret;
             switch (type) {
             case 0: // IN
@@ -942,7 +1015,7 @@ int calcNodes() {
                break;
             case 1: // SR
                //printf("case SR\n");
-               //printf("SR i:%d node:%p name:%s from:%p\n", i, &nPtr[s], nPtr[s].name, from);
+               //printf("SR i:%d node:%p name:%s from:%p\n", i, &nPtr[s], nPtr->name, from);
                //printf("SR i:%d from->name:%s\n", i, from->name);
                //printf("SR i:%d from->Io:%g\n", i, from->Io);
                //printf("SR i:%d from->out:%d\n", i, from->out);
@@ -988,14 +1061,14 @@ int calcNodes() {
                printf("ERROR: unsupported type:%d\n", type);
                return -1;
             } // switch (type)
-            //printf("s:%d node:'%s'\n", s, nPtr[s].name);
-            //printf("going up following node:'%s' input i:%d\n", nPtr[s].name, i);
+            //printf("s:%d node:'%s'\n", s, nPtr->name);
+            //printf("going up following node:'%s' input i:%d\n", nPtr->name, i);
             from=from->from[0];
          } // while (from!=NULL)
          skip: // stop graph exploration to root
-         //printf("s:%d node:'%s' input:%d check next input\n", s, nPtr[s].name, i);
+         //printf("s:%d node:'%s' input:%d check next input\n", s, nPtr->name, i);
       } // for (int i=0; i<MaxIns; i++) // for every load input
-      //printf("s:%d node:'%s' check next node\n", s, nPtr[s].name);
+      //printf("s:%d node:'%s' check next node\n", s, nPtr->name);
    } // for (int s=0; s<sect; s++) // INI sections = # nodes
    printf("done\n");
    printf("\n");
@@ -1005,88 +1078,90 @@ int calcNodes() {
 int showStructData() {
    // show struct data
    printf("show struct data\n");
-   for (int s=0; s<sect; s++) { // INI sections = # nodes
+   nTy* nPtr=nList.first;
+   for (int s=0; s<sect; s++, nPtr=nPtr->next) { // INI sections = # nodes
       char nodeName[5];
-      if (nPtr[s].type==-1) continue; // skip BOARD
+      if (nPtr->type==-1) continue; // skip BOARD
       printf("node:%d\n", s);
       printf("ptr addr:%p\n", &nPtr[s]);
-      strcpy(nodeName, nPtr[s].name);
-      printf("node:'%s' key:type=%d\n", nodeName, nPtr[s].type);
-      printf("node:'%s' key:label='%s'\n", nodeName, nPtr[s].label);
-      printf("node:'%s' key:refdes='%s'\n", nodeName, nPtr[s].refdes);
+      strcpy(nodeName, nPtr->name);
+      printf("node:'%s' key:type=%d\n", nodeName, nPtr->type);
+      printf("node:'%s' key:label='%s'\n", nodeName, nPtr->label);
+      printf("node:'%s' key:refdes='%s'\n", nodeName, nPtr->refdes);
       for (int i=0; i<MaxIns; i++) {
-         if (nPtr[s].from[i]==NULL) continue; // here break is better
-         printf("node:'%s' key:from[%d]=%p\n", nodeName, i, nPtr[s].from[i]);
-         printf("node:'%s' key:Vi[%d]  =%g\n", nodeName, i, nPtr[s].Vi[i]);
-         printf("node:'%s' key:Ii[%d]  =%g\n", nodeName, i, nPtr[s].Ii[i]);
-         printf("node:'%s' key:R[%d]   =%g\n", nodeName, i, nPtr[s].R[i]);
-         printf("node:'%s' key:Pi[%d]  =%g\n", nodeName, i, nPtr[s].Pi[i]);
+         if (nPtr->from[i]==NULL) continue; // here break is better
+         printf("node:'%s' key:from[%d]=%p\n", nodeName, i, nPtr->from[i]);
+         printf("node:'%s' key:Vi[%d]  =%g\n", nodeName, i, nPtr->Vi[i]);
+         printf("node:'%s' key:Ii[%d]  =%g\n", nodeName, i, nPtr->Ii[i]);
+         printf("node:'%s' key:R[%d]   =%g\n", nodeName, i, nPtr->R[i]);
+         printf("node:'%s' key:Pi[%d]  =%g\n", nodeName, i, nPtr->Pi[i]);
       }
-      printf("node:'%s' key:Iadj=%g\n", nodeName, nPtr[s].Iadj);
-      printf("node:'%s' key:yeld=%g\n", nodeName, nPtr[s].yeld);
-      printf("node:'%s' key:DV  =%g\n", nodeName, nPtr[s].DV);
-      printf("node:'%s' key:Pd  =%g\n", nodeName, nPtr[s].Pd);
-      printf("node:'%s' key:Vo  =%g\n", nodeName, nPtr[s].Vo);
-      printf("node:'%s' key:Io  =%g\n", nodeName, nPtr[s].Io);
-      printf("node:'%s' key:Po  =%g\n", nodeName, nPtr[s].Po);
+      printf("node:'%s' key:Iadj=%g\n", nodeName, nPtr->Iadj);
+      printf("node:'%s' key:yeld=%g\n", nodeName, nPtr->yeld);
+      printf("node:'%s' key:DV  =%g\n", nodeName, nPtr->DV);
+      printf("node:'%s' key:Pd  =%g\n", nodeName, nPtr->Pd);
+      printf("node:'%s' key:Vo  =%g\n", nodeName, nPtr->Vo);
+      printf("node:'%s' key:Io  =%g\n", nodeName, nPtr->Io);
+      printf("node:'%s' key:Po  =%g\n", nodeName, nPtr->Po);
       for (int t=0; t<MaxOut; t++) {
-         if (nPtr[s].to[t]!=NULL) 
-         printf("node:'%s' key:to[%d]  =%p\n", nodeName, t, nPtr[s].to[t]);
+         if (nPtr->to[t]!=NULL) 
+         printf("node:'%s' key:to[%d]  =%p\n", nodeName, t, nPtr->to[t]);
       }
-      printf("node:'%s' key:out =%d\n", nodeName, nPtr[s].out);
+      printf("node:'%s' key:out =%d\n", nodeName, nPtr->out);
       printf("\n");
    }
    return 0;
 } // int showStructData()
 
-int saveINIres(nTy* nPtr, int nodes) {
+int saveINI(nTy* nPtr, int nodes, char* fileName) {
    char bufferPtr[5000]="";
-   printf("Writing nodes:%d to INIres file:'%s'\n", nodes, DefCliIniResFile);
+   printf("Writing sections:%d to INI file:'%s'\n", nodes, fileName);
    int out=0;
    //out+=sprintf(bufferPtr+out, "[BOARD]\n");
    //out+=sprintf(bufferPtr+out, "label=%s\n", "ES3");
    //out+=sprintf(bufferPtr+out, "\n");
-   for (int n=0; n<nodes; n++) {
-      int type=nPtr[n].type;
-      out+=sprintf(bufferPtr+out, "[%s]\n", nPtr[n].name);
-      out+=sprintf(bufferPtr+out, "label=%s\n", nPtr[n].label);
+   nPtr=nList.first;
+   for (int n=0; n<nodes; n++, nPtr=nPtr->next) {
+      int type=nPtr->type;
+      out+=sprintf(bufferPtr+out, "[%s]\n", nPtr->name);
+      out+=sprintf(bufferPtr+out, "label=%s\n", nPtr->label);
       if (type!=-1 && type!=0) { // no BOARD and IN
-         out+=sprintf(bufferPtr+out, "refdes=%s\n", nPtr[n].refdes);
+         out+=sprintf(bufferPtr+out, "refdes=%s\n", nPtr->refdes);
       }
       if (type==3) { // LDx
          for (int i=0; i<MaxIns; i++) {
-            if (nPtr[n].from[i]==NULL) continue; // LDx can have more than one
-            out+=sprintf(bufferPtr+out, "f%d=%s\n", i, nPtr[n].in[0]);
-            out+=sprintf(bufferPtr+out, "V%d=%g\n", i, nPtr[n].Vi[i]);
-            out+=sprintf(bufferPtr+out, "I%d=%g\n", i, nPtr[n].Ii[i]);
-            out+=sprintf(bufferPtr+out, "R%d=%g\n", i, nPtr[n].R[i]);
-            out+=sprintf(bufferPtr+out, "P%d=%g\n", i, nPtr[n].Pi[i]);
+            if (nPtr->from[i]==NULL) continue; // LDx can have more than one
+            out+=sprintf(bufferPtr+out, "f%d=%s\n", i, nPtr->in[i]);
+            out+=sprintf(bufferPtr+out, "V%d=%g\n", i, nPtr->Vi[i]);
+            out+=sprintf(bufferPtr+out, "I%d=%g\n", i, nPtr->Ii[i]);
+            out+=sprintf(bufferPtr+out, "R%d=%g\n", i, nPtr->R[i]);
+            out+=sprintf(bufferPtr+out, "P%d=%g\n", i, nPtr->Pi[i]);
          }
       } else if (type!=-1 && type!=0) { // no BOARD and IN and LDx
-         out+=sprintf(bufferPtr+out, "f0=%s\n", nPtr[n].in[0]);
-         out+=sprintf(bufferPtr+out, "Vi=%g\n", nPtr[n].Vi[0]);
-         out+=sprintf(bufferPtr+out, "Ii=%g\n", nPtr[n].Ii[0]);
-         out+=sprintf(bufferPtr+out, "Pi=%g\n", nPtr[n].Pi[0]);
+         out+=sprintf(bufferPtr+out, "f0=%s\n", nPtr->in[0]);
+         out+=sprintf(bufferPtr+out, "Vi=%g\n", nPtr->Vi[0]);
+         out+=sprintf(bufferPtr+out, "Ii=%g\n", nPtr->Ii[0]);
+         out+=sprintf(bufferPtr+out, "Pi=%g\n", nPtr->Pi[0]);
       }
       if (type!=-1 && type!=0) { // no BOARD and IN
          if (type!=3) { // no LOAD
-            out+=sprintf(bufferPtr+out, "DV=%g\n", nPtr[n].DV);
-            if (!strncasecmp(nPtr[n].name, "SR", 2)) {
-               out+=sprintf(bufferPtr+out, "n=%g\n", nPtr[n].yeld);
+            out+=sprintf(bufferPtr+out, "DV=%g\n", nPtr->DV);
+            if (!strncasecmp(nPtr->name, "SR", 2)) {
+               out+=sprintf(bufferPtr+out, "n=%g\n", nPtr->yeld);
             } else {
-               out+=sprintf(bufferPtr+out, "Iadj=%g\n", nPtr[n].Iadj);
+               out+=sprintf(bufferPtr+out, "Iadj=%g\n", nPtr->Iadj);
             }
          }
-         out+=sprintf(bufferPtr+out, "Pd=%g\n", nPtr[n].Pd);
+         out+=sprintf(bufferPtr+out, "Pd=%g\n", nPtr->Pd);
       }
       if (type==0) { // IN
-         out+=sprintf(bufferPtr+out, "V=%g\n", nPtr[n].Vo);
-         out+=sprintf(bufferPtr+out, "I=%g\n", nPtr[n].Io);
-         out+=sprintf(bufferPtr+out, "P=%g\n", nPtr[n].Po);
+         out+=sprintf(bufferPtr+out, "V=%g\n", nPtr->Vo);
+         out+=sprintf(bufferPtr+out, "I=%g\n", nPtr->Io);
+         out+=sprintf(bufferPtr+out, "P=%g\n", nPtr->Po);
       } else if (type!=-1 && type!=3) { // LDx
-         out+=sprintf(bufferPtr+out, "Vo=%g\n", nPtr[n].Vo);
-         out+=sprintf(bufferPtr+out, "Io=%g\n", nPtr[n].Io);
-         out+=sprintf(bufferPtr+out, "Po=%g\n", nPtr[n].Po);
+         out+=sprintf(bufferPtr+out, "Vo=%g\n", nPtr->Vo);
+         out+=sprintf(bufferPtr+out, "Io=%g\n", nPtr->Io);
+         out+=sprintf(bufferPtr+out, "Po=%g\n", nPtr->Po);
       }
       out+=sprintf(bufferPtr+out, "\n");
       //printf("buffer[%d]:'\n%s\n'\n", i, bufferPtr);
@@ -1095,14 +1170,15 @@ int saveINIres(nTy* nPtr, int nodes) {
    //printf("buffer:'\n%s\n'\n", bufferPtr);
    //int len=sizeof(bufferPtr);
    //printf("out:%d len:%d\n", out, len);
-   FILE* filePtr=openWrite(DefCliIniResFile);
+   FILE* filePtr=openWrite(fileName);
    fwrite(bufferPtr, 1, out, filePtr);
    fclose(filePtr);
-   printf("Written out:%d Bytes\n", out);
+   printf("Written nodes:%d Bytes:%d\n", nodes-1, out);
    return 0;
-} // int saveINIres(nTy* nPtr, int nodes)
+} // int saveINIres(nTy* nPtr, int nodes, char* fileName)
 
 int freeMem() {
+   nTy* nPtr=nList.first;
    //printf("freeMem nPtr:%p\n", nPtr);
    free(nPtr);
    iniparser_freedict(graphPtr);

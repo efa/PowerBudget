@@ -20,8 +20,8 @@
 #define POWERB_H_
 
 #define DefCliIniFile    "powerb.ini"     // default filename for input with node graph
-#define DefGuiIniFile    "powerbG2C.ini"  // default filename used to pass data GUI to CLI
-#define DefCliIniResFile "powerb.res.ini" // default filename for output with results
+#define DefCliIniResFile "powerb.res.ini" // default filename used as output by the CLI
+#define DefGuiIniResFile "powerb.GUI.ini" // default filename used as output by the GUI
 #define MaxIns  3 // number of max input supply for a load, count from 0
 #define MaxOut 17 // 16 number of max load for a supply, count from 0
 #define MaxRserie 4 // number of max R in serie
@@ -31,8 +31,6 @@ typedef struct nTy { char name[5]; // "IN", "SRxx", "LRxx", "LDxx"
                      int type;     // IN=0, SR=1, LR=2, RS=4, LD=3
                      char label[15]; // any user string
                      char refdes[7]; // "Uxx" or "RNxxxx"
-                     int col; // used for positioning
-                     int row; // used for positioning
                      struct nTy* from[MaxIns]; // SR,LR,RS has 1, LD up to MaxIns
                      char in[MaxIns][5]; // used by the GUI
                      double Vi[MaxIns];
@@ -48,20 +46,29 @@ typedef struct nTy { char name[5]; // "IN", "SRxx", "LRxx", "LDxx"
                      double Po;
                      struct nTy* to[MaxOut]; // to leaf
                      int out;
+                     int col; // used for GUI positioning
+                     int row; // used for GUI positioning
+                     struct nTy* prev;
+                     struct nTy* next;
                    } nTy;
+
+typedef struct nList { // needed to support GUI
+    nTy* first;
+    nTy* last;
+    int nodeCnt;
+    int init;
+} nListTy;
+
+extern nListTy nList; // double linked list of node values
 
 extern nTy* nPtr; // struct of nodes ptr
 
 
-int saveINI(void* nodedit); // GUI: before call "powerb"
+void nListInit(nListTy* nListPtr); // init the double linked node list
 
-int calcINI(); // GUI: call to "powerb"
+nTy* nListAdd(nListTy* nListPtr); // add an empty node to the double linked list as last element, return its pointer
 
-int loadINIres(void* nodedit); // GUI: 
-
-int initNodeData(nTy* node); // GUI: 
-
-int fillNodeData(int id, nTy* node); // GUI: 
+void nListDel(nListTy* nListPtr, nTy* nodePtr); // delete a node from the double linked list
 
 int loadINI(char* graphFile, int* sectPtr); // LIB: load INI file
 
@@ -69,7 +76,7 @@ int calcNodes(); // LIB: calc nodes
 
 int showStructData(); // show struct data
 
-int saveINIres(nTy* nPtr, int nodes); // LIB: save INI with results
+int saveINI(nTy* nPtr, int nodes, char* fileName); // LIB: save INI with results
 
 int freeMem(); // LIB: free mem
 

@@ -70,7 +70,8 @@ int main(int argNum, char* argV[]) {
    //ret=showStructData();
 
    //printf("Tot Sect:%d Nodes:%d\n", sect, nt);
-   saveINIres(nPtr, sect);
+   nTy* nPtr=nList.first;
+   saveINI(nPtr, sect, DefCliIniResFile);
 
    ret=freeMem();
    free(graphFile);
