@@ -50,8 +50,7 @@ int main(int argNum, char* argV[]) {
    }
    //printf("INI file:'%s'\n", graphFile);
 
-   int sect;
-   ret=loadINI(graphFile, &sect);
+   ret=loadINI(graphFile);
    if (ret!=0) {
       printf("loadINI returned not OK:%d\n", ret);
       ret=freeMem();
@@ -70,8 +69,7 @@ int main(int argNum, char* argV[]) {
    //ret=showStructData();
 
    //printf("Tot Sect:%d Nodes:%d\n", sect, nt);
-   nTy* nPtr=nList.first;
-   saveINI(nPtr, sect, DefCliIniResFile);
+   saveINI(DefCliIniResFile);
 
    ret=freeMem();
    free(graphFile);

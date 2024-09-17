@@ -70,13 +70,15 @@ nTy* nListAdd(nListTy* nListPtr); // add an empty node to the double linked list
 
 void nListDel(nListTy* nListPtr, nTy* nodePtr); // delete a node from the double linked list
 
-int loadINI(char* graphFile, int* sectPtr); // LIB: load INI file
+int loadINI(char* graphFile); // LIB: load INI file
+
+int clearNodes(); // clear node outputs
 
 int calcNodes(); // LIB: calc nodes
 
 int showStructData(); // show struct data
 
-int saveINI(nTy* nPtr, int nodes, char* fileName); // LIB: save INI with results
+int saveINI(char* fileName); // LIB: save INI with results
 
 int freeMem(); // LIB: free mem
 

@@ -386,26 +386,35 @@ void nodeDelAll(struct node_editor* editorPtr) {
 } // nodeDelAll(struct node_editor* editorPtr)
 
 //#define MaxNodes 50
-int nodes=-1;
+//int nodes=-1;
 
-// GUI: create first node
+// GUI: create BOARD and IN first node
 void node_editor_in(struct node_editor* graphPtr) {
-    nodes=-1;
-
     //int sect=MaxNodes;
     //printf("nPtr:%p\n", nPtr);
     //nPtr=malloc(sect*sizeof(nTy)); // allocate space for sect nTy
     //printf("nPtr:%p\n", nPtr);
 
-    char name[5];
+    char name[7];
     int id;
     nTy* nPtr;
-    strcpy(name, "IN"); nodes++;
+    strcpy(name, "BOARD");
+    id=node_editor_add(graphPtr, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 0);
+    printf("name:'%s' id:%d\n", name, id);
+    nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
+    initNodeData(nPtr); // zero the node
+    strcpy(nPtr->name, name); nPtr->type=-1; strcpy(nPtr->label, name);
+    fillNodeData(id, nPtr);
+    printf("nPtr:%p name:'%s' type:%d\n", nPtr, nPtr->name, nPtr->type);
+    strcpy(name, "IN");
     id=node_editor_add(graphPtr, name, nk_rect(OFFSET                       , OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), 0, 1);
+    printf("name:'%s' id:%d\n", name, id);
     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
     initNodeData(nPtr); // zero the node
     strcpy(nPtr->name, name); nPtr->type=0; strcpy(nPtr->label, name); nPtr->Vo=5;
     fillNodeData(id, nPtr);
+    printf("nPtr:%p name:'%s' type:%d\n", nPtr, nPtr->name, nPtr->type);
+    showStructData();
 } // node_editor_in(struct node_editor* graphPtr)
 
 static void
@@ -419,11 +428,9 @@ node_editor_init(struct node_editor *editor)
     editor->node_count=0;
     editor->link_count=0;
     editor->show_grid = nk_true;
+    editor->initialized = 1;
 
     nListInit(&nList); // init the double linked node list
-    nodes=-1;
-
-    node_editor_in(editor); // GUI: create first node
 }
 
 #if 0
@@ -434,35 +441,35 @@ void node_editor_demo(struct node_editor *editor) {
     char name[5];
 
     // other nodes as demo show
-    strcpy(name, "SR1"); nodes++;
+    strcpy(name, "SR1"); //nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0, 255,  0), 1, 1);
     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
     initNodeData(nPtr);
     strcpy(nPtr->name, name); nPtr->type=1; strcpy(nPtr->label,"Buck"); strcpy(nPtr->refdes,"U14");
     strcpy(nPtr->in[0],"IN"); nPtr->yeld=0.9; nPtr->Vo=1.8;
     fillNodeData(id, nPtr);
-    strcpy(name, "LR1"); nodes++;
+    strcpy(name, "LR1"); //nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+1*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
     initNodeData(nPtr);
     strcpy(nPtr->name, name); nPtr->type=2; strcpy(nPtr->label,"LDO1"); strcpy(nPtr->refdes,"U12");
     strcpy(nPtr->in[0],"IN"); nPtr->Iadj=0.005; nPtr->Vo=3.6;
     fillNodeData(id, nPtr);
-    strcpy(name, "LR2"); nodes++;
+    strcpy(name, "LR2"); //nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+2*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(  0,   0,255), 1, 1);
     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
     initNodeData(nPtr);
     strcpy(nPtr->name, name); nPtr->type=2; strcpy(nPtr->label,"LDO2"); strcpy(nPtr->refdes,"U13");
     strcpy(nPtr->in[0],"LR1"); nPtr->Iadj=0.005; nPtr->Vo=3.3L;
     fillNodeData(id, nPtr);
-    strcpy(name, "LD1"); nodes++;
+    strcpy(name, "LD1"); //nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET                        , NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 3, 0);
     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
     initNodeData(nPtr);
     strcpy(nPtr->name, name); nPtr->type=3; strcpy(nPtr->label,"SpW"); strcpy(nPtr->refdes,"U20");
     strcpy(nPtr->in[0],"SR1"); nPtr->Ii[0]=0.528; strcpy(nPtr->in[1],"SR1"); nPtr->Ii[1]=0.008; strcpy(nPtr->in[2],"LR2"); nPtr->Ii[2]=0.317;
     fillNodeData(id, nPtr);
-    strcpy(name, "LD2"); nodes++;
+    strcpy(name, "LD2"); //nodes++;
     id=node_editor_add(editor, name, nk_rect(OFFSET+3*(NODE_WIDTH+SPACING), OFFSET+1*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255, 255,  0), 1, 0);
     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
     initNodeData(nPtr);
@@ -481,7 +488,6 @@ void node_editor_demo(struct node_editor *editor) {
 
 int nodeclick=0;
 int nodeid=0;
-//char text[10]="text";
 
 static int
 node_editor(struct nk_context *ctx)
@@ -495,7 +501,8 @@ node_editor(struct nk_context *ctx)
 
     if (!nodeEditor.initialized) {
         node_editor_init(&nodeEditor);
-        nodeEditor.initialized = 1;
+        //nodeEditor.initialized = 1;
+        //node_editor_in(&nodeEditor);
         //node_editor_demo(&nodeEditor);
         printf("load INI file\n");
         guiLoadINI(nodedit, DefCliIniFile);
@@ -616,13 +623,17 @@ node_editor(struct nk_context *ctx)
                        nk_label(ctx, "", NK_TEXT_RIGHT); nk_label(ctx, "", NK_TEXT_RIGHT); nk_label(ctx, "", NK_TEXT_RIGHT);      nk_label(ctx, "", NK_TEXT_RIGHT);                                nk_label(ctx, "", NK_TEXT_RIGHT); nk_property_double(ctx, "###n", 0, &nd->Io, DBL_MAX, STEP, SPP); nk_label(ctx, "A", NK_TEXT_LEFT);
                        nk_layout_row(ctx, NK_STATIC, 20, 7, size);
                        nk_label(ctx, "", NK_TEXT_RIGHT); nk_label(ctx, "", NK_TEXT_RIGHT); nk_label(ctx, "Pdis:", NK_TEXT_RIGHT); nk_property_double(ctx, "###n", 0, &nd->Pd, DBL_MAX, STEP, SPP); nk_label(ctx, "W", NK_TEXT_LEFT); nk_property_double(ctx, "###n", 0, &nd->Po, DBL_MAX, STEP, SPP); nk_label(ctx, "W", NK_TEXT_LEFT);
+                    } else if (!strncasecmp(it->name, "BOARD", 5)) { // BOARD
+                       // do not draw anything for BOARD
                     } else { // VoltReg
                        const float size0[] = {35, 55, 60, 80};
                        nk_layout_row(ctx, NK_STATIC, 20, 4, size0);
                        if (!strncasecmp(it->name, "LR", 2)) { // Linear
                           voltReg_radio=LR;
+                          strcpy(it->valuesPtr->name, "LRx"); it->valuesPtr->type=2; strcpy(it->valuesPtr->label, "LRx");
                        } else { // Switching
                           voltReg_radio=SR;
+                          strcpy(it->valuesPtr->name, "SRx"); it->valuesPtr->type=1; strcpy(it->valuesPtr->label, "SRx");
                        }
                        nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, refdes, 7, 0); nk_label(ctx, "VoltReg:", NK_TEXT_LEFT); if (nk_option_label(ctx, "Linear", voltReg_radio == LR)) voltReg_radio=LR; if (nk_option_label(ctx, "Switching", voltReg_radio == SR)) voltReg_radio=SR;
 //                       const float size[] = {50, 15, 30, 50, 15, 50, 10};
@@ -736,6 +747,12 @@ node_editor(struct nk_context *ctx)
                             nodedit->linking.active = nk_false;
                             node_editor_link(nodedit, nodedit->linking.input_id,
                                              nodedit->linking.input_slot, it->ID, n);
+                            struct node* nodeEPtr=node_editor_find(nodedit, it->ID);
+                            printf("nodeEPtr:%p nPtr:%p name:'%s' type:%d\n", nodeEPtr, nodeEPtr->valuesPtr, nodeEPtr->valuesPtr->name, nodeEPtr->valuesPtr->type);
+                            struct node* nodeSPtr=node_editor_find(nodedit, nodedit->linking.input_id);
+                            printf("nodeSPtr:%p nPtr:%p name:'%s' type:%d\n", nodeSPtr, nodeSPtr->valuesPtr, nodeSPtr->valuesPtr->name, nodeSPtr->valuesPtr->type);
+                            nodeEPtr->valuesPtr->from[n]=nodeSPtr->valuesPtr;
+                            showStructData();
                         }
 
                         /* check if click on input */
@@ -829,49 +846,69 @@ node_editor(struct nk_context *ctx)
                 if (nk_contextual_item_label(ctx, "Del Node", NK_TEXT_CENTERED)) {
                    if (nodeid>0) { // cannot remove node 0 IN
                       printf("delete node id:%d\n", nodeid);
+                      printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
                       //node_editor_del(nodedit, nodeid);
                       struct node* nodePtr=node_editor_find(nodedit, nodeid);
                       nListDel(&nList, nodePtr->valuesPtr); // remove node values
                       node_editor_delnode(nodedit, nodePtr); // remove GUI node
-                      nodes--;
+                      //nodes--;
+                      printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
                       printf("\n");
                       nodeclick=0;
                    }
                 }
                 if (nk_contextual_item_label(ctx, "New Reg", NK_TEXT_CENTERED)) {
-                    nodes++;
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
+                    //nodes++;
                     int idn=node_editor_add(nodedit, "Reg", nk_rect(500, 400, NODE_WIDTH, NODE_HEIGHT),
                             nk_rgb(255, 255, 255), 1, 1);
                     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
                     initNodeData(nPtr);
+                    nPtr->type=1;
+                    strcpy(nPtr->name, "SRx"); nPtr->type=1; strcpy(nPtr->label, "SRx");
                     fillNodeData(idn, nPtr);
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
                 }
                 if (nk_contextual_item_label(ctx, "New Load", NK_TEXT_CENTERED)) {
-                    nodes++;
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
+                    //nodes++;
                     int idn=node_editor_add(nodedit, "LDx", nk_rect(500, 400, NODE_WIDTH, NODE_HEIGHT),
                             nk_rgb(255, 255, 255), 1, 0);
                     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
                     initNodeData(nPtr);
+                    strcpy(nPtr->name, "LDx"); nPtr->type=3; strcpy(nPtr->label, "LDx");
                     fillNodeData(idn, nPtr);
+                    printf("nPtr:%p name:'%s' type:%d\n", nPtr, nPtr->name, nPtr->type);
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
+                    //showStructData();
                 }
                 if (nk_contextual_item_label(ctx, "Clear all", NK_TEXT_CENTERED)) {
                     printf("Clear all\n");
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
                     nodeDelAll(nodedit);
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
+                    node_editor_init(nodedit);
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
                     node_editor_in(nodedit);
-                    //node_editor_start(nodedit);
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
+                    printf("Cleared\n");
+                    //showStructData();
                 }
                 if (nk_contextual_item_label(ctx, "Load INI", NK_TEXT_CENTERED)) {
                     printf("load INI file\n");
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
                     guiLoadINI(nodedit, DefCliIniFile);
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
                 }
                 if (nk_contextual_item_label(ctx, "Save INI", NK_TEXT_CENTERED)) {
                     printf("save INI file\n");
-                    saveINI(nodedit->begin->valuesPtr, nodedit->node_count, DefGuiIniResFile);
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
+                    saveINI(DefGuiIniResFile);
                 }
                 if (nk_contextual_item_label(ctx, "Calc Nodes", NK_TEXT_CENTERED)) {
 #if 0
                     printf("save INI file\n");
-                    saveINI(nodedit->begin->valuesPtr, nodedit->node_count, DefGuiIniResFile);
+                    saveINI(DefGuiIniResFile);
                     printf("calc INI file\n");
                     calcINI();
                     printf("load INI results file\n");
@@ -879,9 +916,15 @@ node_editor(struct nk_context *ctx)
 #endif
                     printf("\n");
                     printf("calc nodes\n");
-                    calcNodes();
+                    printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
+                    clearNodes();
+                    int ret=calcNodes();
+                    if (ret!=0) {
+                       printf("calcNodes returned:%d, quit\n", ret);
+                       exit(0);
+                    }
                     printf("save INI file\n");
-                    saveINI(nodedit->begin->valuesPtr, nodedit->node_count, DefGuiIniResFile);
+                    saveINI(DefGuiIniResFile);
                 }
                 if (nk_contextual_item_label(ctx, grid_option[nodedit->show_grid],NK_TEXT_CENTERED))
                     nodedit->show_grid = !nodedit->show_grid;

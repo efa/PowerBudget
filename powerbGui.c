@@ -223,12 +223,11 @@ int findGuiNode(void* nodedit, nTy* nodeValPtr) {
    struct node* nodePtr;
    //printf("graph searching  node:%p\n", nodeValPtr);
    nodePtr=nodeditPtr->begin;
-   for (int n=0; n<nodeEditor.node_count; n++) {
+   for (int n=0; n<nodeEditor.node_count; n++, nodePtr=nodePtr->next) {
       //printf("graph n:%02d id:%02d node:%p valuesPtr:%p\n", n, nodePtr->ID, nodePtr, nodePtr->valuesPtr);
       //printf("graph n:%02d id:%02d name:'%s' values.to.name:'%s'\n", n, nodePtr->ID, nodePtr->name, nodePtr->valuesPtr->to[0]->name);
       if (nodePtr->valuesPtr->type==-1) continue; // BOARD
       if (nodePtr->valuesPtr==nodeValPtr) break;
-      nodePtr=nodePtr->next;
    }
    return nodePtr->ID;
 } // int findGuiNode(void* nodedit, nTy* nodeValPtr)
@@ -238,6 +237,7 @@ int guiLoadINI(void* nodedit, char* fileName) {
    nodeditPtr=nodedit;
    struct node* nodePtr;
    // at first remove all existing nodes and links
+   printf("nodeditPtr->node_count:%d nList.nodeCnt:%d\n", nodeditPtr->node_count, nList.nodeCnt);
    printf("removing current nodes ...\n");
 #if 0
    int pass=0;
@@ -259,57 +259,60 @@ int guiLoadINI(void* nodedit, char* fileName) {
    freeMem(); // free values
    printf("cleared\n");
    //printf("\n");
+   printf("nodeditPtr->node_count:%d nList.nodeCnt:%d\n", nodeditPtr->node_count, nList.nodeCnt);
 
    printf("init ...\n");
    node_editor_init(&nodeEditor);
    nodeEditor.initialized = 1;
-   int id;
    //char name[5];
+   printf("nodeditPtr->node_count:%d nList.nodeCnt:%d\n", nodeditPtr->node_count, nList.nodeCnt);
 
    //int ret;
-   int sect;
+   //int sect;
    printf("loading ...\n");
-   loadINI(fileName, &sect);
+   loadINI(fileName);
+   int sect=nList.nodeCnt;
    printf("loaded %d sections, %d nodes\n", sect, sect-1);
    printf("\n");
    //showStructData();
+   printf("nodeditPtr->node_count:%d nList.nodeCnt:%d\n", nodeditPtr->node_count, nList.nodeCnt);
 
    // create GUI nodes
    printf("Creating GUI nodes ...\n");
+   int id;
    nTy* nPtr=nList.first;
    for (int n=0; n<sect; n++, nPtr=nPtr->next) {
       //printf("graph n:%02d node:'%s'\n", n, nPtr->name);
-      //if (!strcasecmp(nPtr->name, "board")) continue;
-      if (nPtr->type==-1) continue; // BOARD
+      //if (nPtr->type==-1) continue; // BOARD
       int in=1, out=1;
-      if (!strcasecmp(nPtr->name, "in")) in=0;
-      if (!strncasecmp(nPtr->name, "ld", 2)) out=0;
+      if (nPtr->type==-1 || nPtr->type==0) in=0;  // BOARD, IN
+      if (nPtr->type==-1 || nPtr->type==3) out=0; // BOARD, LD
       //printf("graph n:%02d node:'%s' col:%d row:%d\n", n, nPtr->name, nPtr->col, nPtr->row);
       id=node_editor_add(nodeditPtr, nPtr->name, nk_rect(OFFSET+(3-nPtr->col)*(NODE_WIDTH+SPACING), OFFSET+nPtr->row*(NODE_HEIGHT+SPACING), NODE_WIDTH, NODE_HEIGHT), nk_rgb(255,   0,  0), in, out);
       //printf("created GUI node:%d\n", id);
       //printf("values addr node:%p\n", nPtr);
       fillNodeData(id, nPtr);
    }
+   printf("nodeditPtr->node_count:%d nList.nodeCnt:%d\n", nodeditPtr->node_count, nList.nodeCnt);
 
-//#if 0
    // create GUI links
    printf("Creating GUI links ...\n");
    nodePtr=nodeditPtr->begin;
-   for (int n=0; n<nodeEditor.node_count; n++) {
+   for (int n=0; n<nodeEditor.node_count; n++, nodePtr=nodePtr->next) {
       //printf("graph n:%02d id:%02d addr:%p\n", n, nodePtr->ID, nodePtr);
-      if (nodePtr->valuesPtr->type==-1) continue; // BOARD
-      if (nodePtr->valuesPtr->type==3) continue; // LD
+      nPtr=nodePtr->valuesPtr;
+      if (nPtr->type==-1) continue; // BOARD
+      if (nPtr->type==3) continue; // LD
       for (int l=0; l<MaxOut; l++) {
-         if (nodePtr->valuesPtr->to[l]!=NULL) {
-            //printf("grap_ n:%02d l:%02d node:%p valuesPtr:%p\n", n, l, nodePtr, nodePtr->valuesPtr);
-            //printf("grap_ n:%02d l:%02d name:'%s' values.to.name:'%s' addr:%p\n", n, l, nodePtr->name, nodePtr->valuesPtr->to[l]->name, nodePtr->valuesPtr->to[l]);
-            int id=findGuiNode(nodeditPtr, nodePtr->valuesPtr->to[l]);
+         if (nPtr->to[l]!=NULL) {
+            //printf("grap_ n:%02d l:%02d node:%p valuesPtr:%p\n", n, l, nodePtr, nPtr);
+            //printf("grap_ n:%02d l:%02d name:'%s' values.to.name:'%s' addr:%p\n", n, l, nodePtr->name, nPtr->to[l]->name, nPtr->to[l]);
+            int id=findGuiNode(nodeditPtr, nPtr->to[l]);
+            //printf("find node id:%d for nPtr->to[l]:%p\n", id, nPtr->to[l]);
             node_editor_link(nodeditPtr, nodePtr->ID, 0, id, 0); // link two nodes: nodeIDfrom, slotIDfrom, nodeIDto, slotIDto
          }
       }
-      nodePtr=nodePtr->next;
    }
-//#endif
    return 0;
 } // int loadINIres(void* nodedit)
 

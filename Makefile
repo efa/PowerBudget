@@ -16,6 +16,7 @@
 
 # Makefile used to build to: Linux, MinGW/Msys2/Win, macOS
 # Win: MinGw64=>bin64 (MinGW/MSYS2)
+# depend: $ sudo apt install libiniparser, libSDL2
 #
 # To build for debug use: $ make debug
 
