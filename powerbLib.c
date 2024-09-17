@@ -1119,13 +1119,18 @@ int showStructData() {
    return 0;
 } // int showStructData()
 
-int clearNodes() { // clear node outputs
-   printf("clear node outputs ...\n");
+int clearNodes() { // clear node Vi, Pd and Io
+   printf("clear node ...\n");
    int sect=nList.nodeCnt;
    nTy* nPtr=nList.first;
    for (int s=0; s<sect; s++, nPtr=nPtr->next) { // INI sections = # nodes
       if (nPtr->type==-1) continue; // board
+      for (int i=0; i<MaxIns; i++) {
+         nPtr->Vi[i]=0;
+      }
+      nPtr->Pd=0;
       nPtr->Io=0;
+      nPtr->Po=0;
    }
    return 0;
 }

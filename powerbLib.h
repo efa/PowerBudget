@@ -72,7 +72,7 @@ void nListDel(nListTy* nListPtr, nTy* nodePtr); // delete a node from the double
 
 int loadINI(char* graphFile); // LIB: load INI file
 
-int clearNodes(); // clear node outputs
+int clearNodes(); // clear node Vi, Pd and Io
 
 int calcNodes(); // LIB: calc nodes
 

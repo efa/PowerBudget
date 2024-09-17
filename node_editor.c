@@ -747,12 +747,14 @@ node_editor(struct nk_context *ctx)
                             nodedit->linking.active = nk_false;
                             node_editor_link(nodedit, nodedit->linking.input_id,
                                              nodedit->linking.input_slot, it->ID, n);
+
                             struct node* nodeEPtr=node_editor_find(nodedit, it->ID);
                             printf("nodeEPtr:%p nPtr:%p name:'%s' type:%d\n", nodeEPtr, nodeEPtr->valuesPtr, nodeEPtr->valuesPtr->name, nodeEPtr->valuesPtr->type);
                             struct node* nodeSPtr=node_editor_find(nodedit, nodedit->linking.input_id);
                             printf("nodeSPtr:%p nPtr:%p name:'%s' type:%d\n", nodeSPtr, nodeSPtr->valuesPtr, nodeSPtr->valuesPtr->name, nodeSPtr->valuesPtr->type);
                             nodeEPtr->valuesPtr->from[n]=nodeSPtr->valuesPtr;
-                            showStructData();
+                            strcpy(nodeEPtr->valuesPtr->in[n], nodeSPtr->valuesPtr->name);
+                            //showStructData();
                         }
 
                         /* check if click on input */
@@ -864,7 +866,7 @@ node_editor(struct nk_context *ctx)
                             nk_rgb(255, 255, 255), 1, 1);
                     nPtr=nListAdd(&nList); // add an empty node to the double linked list as last element, return its pointer
                     initNodeData(nPtr);
-                    nPtr->type=1;
+                    nPtr->type=1; nPtr->yeld=0.9;
                     strcpy(nPtr->name, "SRx"); nPtr->type=1; strcpy(nPtr->label, "SRx");
                     fillNodeData(idn, nPtr);
                     printf("nodedit->node_count:%d nList.nodeCnt:%d\n", nodedit->node_count, nList.nodeCnt);
