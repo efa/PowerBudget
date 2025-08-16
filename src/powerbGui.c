@@ -1,5 +1,5 @@
-/* PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget */
-/* Copyright 2024 Valerio Messina http://users.iol.it/efa              */
+/* PowerBudget v0.00.01a 2025/08/15 calculate power dissipation and budget */
+/* Copyright 2024-2025 Valerio Messina http://users.iol.it/efa              */
 /* powerbGui.c is part of PowerBudget
    PowerBudget is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

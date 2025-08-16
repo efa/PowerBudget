@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Exec=powerBudgetGuiLinux64
+Comment=Start PowerBudgetGui
+Comment[it_IT]=Avvia PowerBudgetGui
+Icon=PowerBudget
+Icon[it_IT]=PowerBudget
+Name=PowerBudgetGui
+Name[it_IT]=PowerBudgetGui
+Categories=Utility

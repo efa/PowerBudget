@@ -1,0 +1,22 @@
+name: GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out GitHub Actions
+on: [push]
+jobs:
+  Explore-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Repository ${{ github.repository }}, branch ${{ github.ref }}"
+      - run: echo "Running on ${{ runner.os }}, triggered by ${{ github.event_name }}"
+      - name: Check out code
+        uses: actions/checkout@v4
+      - run: echo "Repository ${{ github.repository }} cloned"
+      - name: Install deps
+        run: sudo apt update |
+             sudo apt install libiniparser-dev libsdl2-dev |
+             sudo apt install 7zip genisoimage grep tar wget
+      - name: Build release
+        run: make force
+      - name: List files in the repository
+        run: |
+             ls -l ${{ github.workspace }}
+      - run: echo "End status ${{ job.status }}."

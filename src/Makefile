@@ -1,5 +1,5 @@
-# PowerBudget v0.00.01a 2024/09/08 calculate power dissipation and budget
-# Copyright 2024 Valerio Messina http://users.iol.it/efa
+# PowerBudget v0.00.01a 2025/08/15 calculate power dissipation and budget
+# Copyright 2024-2025 Valerio Messina http://users.iol.it/efa
 # Makefile is part of PowerBudget
 # PowerBudget is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
 
 # Makefile used to build to: Linux, MinGW/Msys2/Win, macOS
 # Win: MinGw64=>bin64 (MinGW/MSYS2)
-# depend: $ sudo apt install libiniparser, libSDL2
+# depend: $ sudo apt install libiniparser-dev, libsdl2-dev
 #
 # To build for debug use: $ make debug
 
-HOST=$(shell uname -o)
+HOST=$(shell uname -s)
 PKG=$(HOST)
 BIT=64
 
@@ -33,8 +33,8 @@ OBJCLI = $(SRCCLI:.c=.o)
 OBJGUI = $(SRCGUI:.c=.o)
 OBJ = $(OBJCLI) $(OBJGUI)
 
-BINCLI = powerb
-BINGUI = powerbGui
+BINCLI = powerBudget$(PKG)$(BIT)
+BINGUI = powerBudgetGui$(PKG)$(BIT)
 BIN = $(BINCLI) $(BINGUI)
 
 # Flags
@@ -93,10 +93,9 @@ cleanobj:
 	rm -f *.o
 
 cleanbin:
-	rm -f $(CLI) $(GUI)
+	rm -f $(BIN)
 
-clean:
-	rm -f $(BIN) $(OBJ)
+clean: cleanobj cleanbin
 
 debug: CFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
 debug: GFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
@@ -109,11 +108,10 @@ debug:
 bin: all cleanobj strip
 
 force: clean bin
-	rm -f *.o
 
 pkg:
 	@echo ""
-	mv $(CLI) $(GUI) ..
+	mv $(BINCLI) $(BINGUI) ..
 	@makePkg.sh $(PKG) $(BIT)
 
 rel: force pkg
