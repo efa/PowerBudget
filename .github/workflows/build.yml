@@ -5,8 +5,10 @@ jobs:
   GitHub-Actions-CI-build:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Repository%3A ${{ github.repository }}, branch%3A ${{ github.ref }}"
-      - run: echo "Running on%3A ${{ runner.os }}, triggered by%3A ${{ github.event_name }}"
+      - run: |
+          echo "Repository: ${{ github.repository }}, branch: ${{ github.ref }}"
+      - run: |
+          echo "Running on: ${{ runner.os }}, triggered by: ${{ github.event_name }}"
       # - name: update distro
       #   run: sudo apt update
       # - name: upgrade distro
