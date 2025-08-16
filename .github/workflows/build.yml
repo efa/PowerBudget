@@ -4,6 +4,8 @@ on: [push]
 jobs:
   GitHub-Actions-CI-build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - run: |
           echo "Repository: ${{ github.repository }}, branch: ${{ github.ref }}"
