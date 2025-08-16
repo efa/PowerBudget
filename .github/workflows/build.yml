@@ -13,7 +13,7 @@ jobs:
         run: sudo apt install libiniparser-dev libsdl2-dev ;
              sudo apt install 7zip genisoimage grep tar wget
       - name: Build rel
-        run: cd src ; make force
+        run: cd src ; make ci
       - name: List files in the repository
         run: ls -l ${{ github.workspace }}/src
       - run: echo "End status ${{ job.status }}."

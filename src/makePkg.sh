@@ -1,5 +1,5 @@
 #!/bin/bash
-# PowerBudget v0.00.01a 2025/08/15 calculate power dissipation and budget
+# PowerBudget v0.00.01a 2025/08/16 calculate power dissipation and budget
 # makePkg.sh: Copyright 2005-2025 Valerio Messina efa@iol.it
 # makePkg is part of PowerBudget
 # PowerBudget is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #
 # Syntax: $ makePkg.sh Linux|WinMxe|WinMgw|MacOS [32|64]
 
-makever=2025-08-15
+makever=2025-08-16
 
 DEPSPATHMGW64="/mingw64/bin" # path of DLLs needed to generate the Mingw64 package
 DEPSPATHMGW32="/mingw32/bin" # path of DLLs needed to generate the Mingw32 package
@@ -45,9 +45,14 @@ if [[ "$flag" = 1 ]]; then
    exit
 fi
 
+if (test "$1" = "-y") then
+   batch=1
+   shift
+fi
 if [[ "$1" = "" || "$1" != "Linux" && "$1" != "WinMxe" && "$1" != "WinMgw" && "$1" != "MacOS" ]]; then
    echo "makePkg ERROR: need the target platform to create package"
-   echo "Syntax: $ makePkg.sh Linux|WinMxe|WinMgw|MacOS [32|64]"
+   echo "Syntax: $ makePkg.sh [-y] Linux|WinMxe|WinMgw|MacOS [32|64]"
+   echo "          -y for batch execution without confirmations"
    exit
 fi
 
@@ -118,7 +123,9 @@ if (test "$DEPSRC" != "") then
    echo "DEP : $DEPSRC"
 fi
 echo "DST : $DSTPATH/$DST"
-read -p "Proceed? A key to continue"
+if (test "$batch" != "1") then
+   read -p "Proceed? A key to continue"
+fi
 echo ""
 
 echo "makePkg: Creating PowerBudget $VER package for $CPU $TGT $BIT bit ..."

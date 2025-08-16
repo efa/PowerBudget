@@ -1,4 +1,4 @@
-# PowerBudget v0.00.01a 2025/08/15 calculate power dissipation and budget
+# PowerBudget v0.00.01a 2025/08/16 calculate power dissipation and budget
 # Copyright 2024-2025 Valerio Messina http://users.iol.it/efa
 # Makefile is part of PowerBudget
 # PowerBudget is free software: you can redistribute it and/or modify
@@ -70,7 +70,7 @@ else # Unix
 		CLIBS += -L/usr/lib/x86_64-linux-gnu
 		GLIBS += -L/usr/lib/x86_64-linux-gnu
 		LDFLAGS += -liniparser
-		LGFLAGS += -liniparser `sdl2-config --libs` -lm # -lSDL2
+		LGFLAGS += -liniparser `sdl2-config --libs` -lm
 	endif
 endif
 
@@ -112,6 +112,9 @@ force: clean bin
 pkg:
 	@echo ""
 	mv $(BINCLI) $(BINGUI) ..
-	@makePkg.sh $(PKG) $(BIT)
+	@makePkg.sh $(CI) $(PKG) $(BIT)
 
 rel: force pkg
+
+ci: CI=-y
+ci: force pkg
