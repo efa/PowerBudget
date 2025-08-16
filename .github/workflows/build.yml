@@ -15,8 +15,7 @@ jobs:
       - name: List files in the repository
         run: ls -l ${{ github.workspace }}
       - name: Build rel
-        run: cd src |
-             make force
+        run: cd src ; make force
       - name: List files in the repository
         run: ls -l ${{ github.workspace }}
       - run: echo "End status ${{ job.status }}."
