@@ -19,7 +19,7 @@
 # used on: Linux=>bin64, Linux=>bin32, Linux=>macOS64
 #          MinGw64=>bin64, MinGw32=>bin32, MXE64=>bin64, MXE32=>bin32
 #
-# Syntax: $ makePkg.sh Linux|WinMxe|WinMgw|MacOS [32|64]
+# Syntax: $ makePkg.sh [-y] Linux|WinMxe|WinMgw|MacOS [32|64]
 
 makever=2025-08-16
 
@@ -27,13 +27,16 @@ DEPSPATHMGW64="/mingw64/bin" # path of DLLs needed to generate the Mingw64 packa
 DEPSPATHMGW32="/mingw32/bin" # path of DLLs needed to generate the Mingw32 package
 DEPSLISTMGW="" # list of dll for MinGW
 
-DSTPATH=".." # path where create the Linux|WinMxe|WinMgw|MacOS package directory
+APP="PowerBudget"     # app name
+SRCPKG=".." # source package path
+BIN="powerBudgetGui" # binary
+DSTPATH=".." # path where create the Linux|Mingw/MXE|OSX package directory
 
-echo "makePkg.sh: create a Linux|WinMxe|WinMgw|MacOS package for PowerBudget ..."
+echo "makePkg.sh: create a Linux|WinMxe|WinMgw|MacOS package for $APP ..."
 
 # check for external dependency compliance
 flag=0
-for extCmd in 7z chmod cp cut genisoimage grep mkdir mv pwd rm tar uname wget ; do
+for extCmd in 7z chmod cp cut date genisoimage grep mkdir mv pwd rm tar uname wget ; do
    exist=`which $extCmd 2> /dev/null`
    if (test "" = "$exist") then
       echo "Required external dependency: "\"$extCmd\"" unsatisfied!"
@@ -50,7 +53,7 @@ if (test "$1" = "-y") then
    shift
 fi
 if [[ "$1" = "" || "$1" != "Linux" && "$1" != "WinMxe" && "$1" != "WinMgw" && "$1" != "MacOS" ]]; then
-   echo "makePkg ERROR: need the target platform to create package"
+   echo "ERROR: makePkg.sh unsupported/miss target platform to create package"
    echo "Syntax: $ makePkg.sh [-y] Linux|WinMxe|WinMgw|MacOS [32|64]"
    echo "          -y for batch execution without confirmations"
    exit
@@ -58,9 +61,14 @@ fi
 
 #exist=`which gtk-mac-bundler 2> /dev/null`
 #if (test "$1" = "MacOS" && test "" = "$exist") then
-#   echo "ERROR: makePkg depend on 'gtk-mac-bundler' to generate for macOS. Exit"
+#   echo "ERROR: makePkg.sh depend on 'gtk-mac-bundler' to generate for macOS. Exit"
 #   exit
 #fi
+exist=`which osxcross-dmg 2> /dev/null`
+if (test "$1" = "OSX64" && test "" = "$exist") then
+   echo "ERROR: makePkg.sh depend on 'osxcross-dmg' to generate for macOS. Exit"
+   exit
+fi
 
 PKG="$1"
 CPU=`uname -m` # i686 or x86_64
@@ -69,19 +77,29 @@ if (test "" = "$2") then
 else
    BIT="$2"
 fi
+
+BIN="$BIN$PKG$BIN"
+if [[ -f $BIN ]]; then
+   mkdir -p $DSTPATH
+else
+   echo "ERROR: makePkg.sh cannot find just built binary './$BIN'. Exit"
+   exit
+fi
+
 if (test "$CPU" = "x86_64" && test "$BIT" = "32") then
    CPU=i686
 fi
 if (test "$PKG" = "WinMxe" || test "$PKG" = "WinMgw") then
    EXT=".exe"
 fi
+
 OS=`uname`
 if (test "$OS" != "Darwin") then
    OS=`uname -o`  # Msys or GNU/Linux, illegal on macOS
 fi
 VER=`grep SourceVersion powerbLib.h | cut -d' ' -f3 | tr -d '."'`
 DATE=`date -I`
-SRC=`pwd`
+BINPATH=`pwd`
 TGT=$PKG
 if [[ "$OS" = "Msys" ]]; then
    if [[ "$BIT" = "64" ]]; then
@@ -91,44 +109,57 @@ if [[ "$OS" = "Msys" ]]; then
       DEPSRC=$DEPSPATHMGW32
    fi
 fi
-DMG=""
+UPKGPAT="" # Uncompressed Package Path
 if [[ "$PKG" = "MacOS" ]]; then
-   DMG="DiskImage/PowerBudget.app/Contents/MacOS"
+   TGT=Osx
+   UPKGPAT="DiskImage/$APP.app/Contents/MacOS"
+   DSTSP="$UPKGPAT"
 fi
-DST="PowerBudget${VER}_${DATE}_${TGT}_${CPU}_${BIT}bit"
+if [[ "$PKG" = "Linux" ]]; then
+   TGT=Linux
+   UPKGPAT="usr/bin"
+   DSTSP="usr/src"
+fi
+DSTPKG="${APP}_${VER}_${DATE}_${TGT}_${CPU}_${BIT}bit"
 
 if [[ "$OS" != "Msys" && "$OS" != "GNU/Linux" ]]; then
-   echo "ERROR: work in Linux|WinMxe(Linux)|WinMgw only"
+   echo "ERROR makePkg.sh: work in Linux|WinMxe(Linux)|WinMgw only"
    exit
 fi
 if [[ "$OS" = "Msys" && "$PKG" != "WinMgw" ]]; then
-   echo "ERROR makePkg: Unsupported target package:$PKG on MinGW/MSYS2"
+   echo "ERROR makePkg.sh: Unsupported target package:$PKG on MinGW/MSYS2"
    exit
 fi
 
 if [[ "$OS" = "GNU/Linux" && "$PKG" != "Linux" && "$PKG" != "WinMxe" && "$PKG" != "MacOS" ]]; then
-   echo "ERROR makePkg: Unsupported target package:$PKG on Linux"
+   echo "ERROR makePkg.sh: Unsupported target package:$PKG on Linux"
    exit
 fi
 
-echo "DATE: $DATE"
-echo "PKG : $PKG"
-echo "CPU : $CPU"
-echo "BIT : $BIT"
-echo "OS  : $OS"
-echo "VER : $VER"
-echo "SRC : $SRC"
-echo "TGT : $TGT"
+echo "DATE   : $DATE"    # today
+echo "APP    : $APP"     # app name
+echo "VER    : $VER"     # src ver
+echo "PKG    : $PKG"     # input par
+echo "TGT    : $TGT"     # req target OS
+echo "TGTBIT : $BIT"     # req target BIT
+echo "TGTCPU : $CPU"     # target CPU
+echo "HOSTOS : $OS"      # current OS
+echo "SRCPKG : $SRCPKG"  # packaging file source path
+echo "BINPATH: $BINPATH" # binary path
+echo "BIN    : $BIN"     # binary file
 if (test "$DEPSRC" != "") then
-   echo "DEP : $DEPSRC"
+echo "SRCDEP : $DEPSRC"  # dependancy path (MinGw)
 fi
-echo "DST : $DSTPATH/$DST"
+echo "DSTPATH: $DSTPATH" # package creation path
+echo "DSTSP  : $DSTSP"   # app sources destination path
+echo "UPKGPAT: $UPKGPAT" # package uncompressed creation path
+echo "DSTPKG : $DSTPKG"  # package name
 if (test "$batch" != "1") then
    read -p "Proceed? A key to continue"
 fi
 echo ""
 
-echo "makePkg: Creating PowerBudget $VER package for $CPU $TGT $BIT bit ..."
+echo "makePkg: Creating $APP $VER package for $TGT$BIT.$CPU ..."
 cp -a ../Readme.txt ../README.md
 
 if (test "$PKG" = "MacOS") then
@@ -136,14 +167,14 @@ if (test "$PKG" = "MacOS") then
       echo "Unsupported 32 bit on MacOS"
       exit
    fi
-   #gtk-mac-bundler PowerBudget.bundle
-   cp -a powerBudgetosx PowerBudget.icns AppDir
+   #gtk-mac-bundler $APP.bundle
+   cp -a ${APP}MacOS $APP.icns AppDir
    cd AppDir
-   osxcross-dmg -rw powerBudgetosx PowerBudget $VER
-   rm uncompressed.dmg powerBudgetosx PowerBudget.icns
-   mv PowerBudget$VER.dmg ..
+   osxcross-dmg -rw ${APP}MacOS $APP $VER
+   rm uncompressed.dmg ${APP}MacOS $APP.icns
+   mv $APP$VER.dmg ..
    cd ..
-   #mkdir $AppName.app
+   #mkdir $APP.app
    #cd ../..
    #AppName=powerBudgetGuiMacOS64
    #ls -l $AppName.app
@@ -162,16 +193,34 @@ if (test "$PKG" = "MacOS") then
    #rm -rf DiskImage
    #echo "Compressing DMG ..."
    #mv $AppName$VER.dmg uncompressed.dmg
+   # dmg from: https://github.com/fanquake/libdmg-hfsplus
    #dmg uncompressed.dmg $AppName$VER.dmg
    #rm uncompressed.dmg
    #echo "$AppName$VER.dmg created."
    exit
 fi
 
-rm -rf AppDir
-mkdir -p AppDir/usr/bin
-rm -rf PowerBudget
-mkdir -p PowerBudget/src
+if [[ -d "$DSTPATH/AppDir" ]]; then
+   echo "Removing old AppDir ..."
+   rm -rf "$DSTPATH/AppDir"
+fi
+mkdir -p "$DSTPATH/AppDir/$UPKGPAT"
+
+if [[ -f "$DSTPATH/AppImage/$DSTPKG.AppImage" ]]; then
+   echo "Removing old AppImage ..."
+   rm -f "$DSTPATH/AppImage/$DSTPKG.AppImage"
+fi
+if [[ -d "$DSTPATH/AppImage/AppDir" ]]; then
+   echo "Removing old AppImageDir ..."
+   rm -rf "$DSTPATH/AppImage/AppDir"
+fi
+
+if [[ -d $DSTPATH/$DSTPKG ]]; then
+   echo "Removing old DSTPKG ..."
+   rm -rf "$DSTPATH/$DSTPKG"
+fi
+mkdir -p $APP/src
+
 cd ..
 cp -a Readme.txt LICENSE src/AppDir/usr/bin
 cp -a Readme.txt LICENSE src/PowerBudget

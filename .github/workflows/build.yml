@@ -11,10 +11,10 @@ jobs:
           echo "Repository: ${{ github.repository }}, branch: ${{ github.ref }}"
       - run: |
           echo "Running on: ${{ runner.os }}, triggered by: ${{ github.event_name }}"
-      # - name: update distro
-      #   run: sudo apt update
-      # - name: upgrade distro
-      #   run: sudo apt upgrade
+      - name: update distro
+        run: sudo apt update
+      - name: upgrade distro
+        run: sudo apt upgrade
       - name: Check out code
         uses: actions/checkout@v4
       - name: Install deps
@@ -37,8 +37,7 @@ jobs:
           git push --tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release
+      - name: Create CI release
         id: create_release
         uses: ncipollo/release-action@v1.18.0
         env:
@@ -54,6 +53,5 @@ jobs:
             ../powerBudget00001a_2025-08-16_Linux_x86_64_64bit.tgz,
             ../powerBudget00001a_2025-08-16_Linux_x86_64_64bit.AppImage
           "
-
       - run: |
           echo "End status: ${{ job.status }}"
