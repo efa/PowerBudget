@@ -31,12 +31,30 @@ jobs:
           # VERSION=${{ steps.version_number.outputs.version }}
           git config --global user.email "ci@github.com"
           git config --global user.name "Github CI"
-          # git tag -d ci-latest       || true
+          git tag -d ci-latest       || true
           # git push origin :ci-latest || true
+          git push --tags
           git tag -m ci-latest ci-latest
           git push --tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        id: create_release
+        uses: ncipollo/release-action@v1.18.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          allowUpdates: true
+          draft: false
+          name: CI Build
+          tag: ci-latest
+          prerelease: true
+          replacesArtifacts: true
+          artifacts: "
+            ../powerBudget00001a_2025-08-16_Linux_x86_64_64bit.tgz,
+            ../powerBudget00001a_2025-08-16_Linux_x86_64_64bit.AppImage
+          "
 
       - run: |
           echo "End status: ${{ job.status }}"
