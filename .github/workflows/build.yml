@@ -2,7 +2,7 @@ name: GitHub Actions CI build
 run-name: ${{ github.actor }} use GitHub Actions for CI build
 on: [push]
 jobs:
-  GitHub-Actions-CI build:
+  GitHub-Actions-CI-build:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Repository ${{ github.repository }}, branch ${{ github.ref }}"
