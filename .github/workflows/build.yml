@@ -9,8 +9,9 @@ jobs:
       - run: echo "Running on ${{ runner.os }}, triggered by ${{ github.event_name }}"
       - name: Check out code
         uses: actions/checkout@v4
-      - name: update distro
-        run: sudo apt update
+      - name: upgrade distro
+        run: sudo apt update ;
+             sudo apt upgrade
       - name: Install deps
         run: sudo apt install libiniparser-dev libsdl2-dev ;
              sudo apt install 7zip genisoimage grep tar wget
@@ -22,20 +23,22 @@ jobs:
              ls -l ${{ github.workspace }}/src
 
       - name: Reset ci-latest tag
-        run: VERSION=${{ steps.version_number.outputs.version }}
-             git config --global user.email "ci@github.com"
-             git config --global user.name "Github CI"
-             git tag -d ci-latest || true
-             git push origin :ci-latest || true
-             git tag -m ci-latest ci-latest
-             git push --tags
-        env: 
-             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version_number.outputs.version }}
+          git config --global user.email "ci@github.com"
+          git config --global user.name "Github CI"
+          git tag -d ci-latest || true
+          git push origin :ci-latest || true
+          git tag -m ci-latest ci-latest
+          git push --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create release
         id: create_release
         uses: ncipollo/release-action@v1.18.0
-        env: 
-             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           allowUpdates: true
           tag: ci-latest
