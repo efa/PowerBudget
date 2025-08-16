@@ -15,7 +15,8 @@ jobs:
              sudo apt install libiniparser-dev libsdl2-dev |
              sudo apt install 7zip genisoimage grep tar wget
       - name: Build release
-        run: make force
+        run: cd src |
+             make force
       - name: List files in the repository
         run: |
              ls -l ${{ github.workspace }}
