@@ -202,7 +202,7 @@ if (test "$PKG" = "Linux" && (test "$CPU" = "x86_64" || test "$CPU" = "i686")) t
       #   chmod +x linuxdeploy-plugin-gtk.sh
       #fi
       #pwd
-      linuxdeploy-x86_64.AppImage -e ../powerBudgetGuiLinux64 --appdir AppDir -i PowerBudget.png -d powerBudget.desktop --output appimage > logLinuxdeploy$DATE.txt
+      ./linuxdeploy-x86_64.AppImage -e ../powerBudgetGuiLinux64 --appdir AppDir -i PowerBudget.png -d powerBudget.desktop --output appimage > logLinuxdeploy$DATE.txt
       ret=$?
       file=powerBudget${VER}_${DATE}_Linux_${CPU}_${BIT}bit.AppImage
       if (test "$ret" = "0") then
