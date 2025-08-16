@@ -31,9 +31,9 @@ jobs:
           git config --global user.email "ci@github.com"
           git config --global user.name "Github CI"
           git tag -d ci-latest 2> /dev/null
-          git push origin :ci-latest 2> /dev/null
-          # git tag -m ci-latest ci-latest
-          # git push --tags
+          # git push origin :ci-latest 2> /dev/null
+          git tag -m ci-latest ci-latest
+          git push --tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
