@@ -190,7 +190,7 @@ cp -a PowerBudget.png powerBudget.desktop PowerBudget/src
 cp -a PowerBudget.ico PowerBudget.icns Info.plist PowerBudget/src 2>/dev/null
 
 if (test "$PKG" = "Linux" && (test "$CPU" = "x86_64" || test "$CPU" = "i686")) then # skip on ARM&RISC-V
-   echo "makePkg.sh: generating the AppImage for PowerBudget (about 1') ..."
+   echo "makePkg.sh: generating the AppImage for PowerBudget (about 20\") ..."
    if (test -f logWget$DATE.txt) then { rm logWget$DATE.txt ; } fi
    if (test "$BIT" = "64") then
       if (! test -x linuxdeploy-x86_64.AppImage) then

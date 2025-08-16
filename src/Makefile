@@ -66,7 +66,8 @@ else # Unix
 		LGFLAGS += -liniparser `sdl2-config --libs` -lm
 	else # Linux
 		CINCS += -I/usr/include/iniparser
-		GINCS += -I/usr/include/iniparser `sdl2-config --cflags` # -I/usr/include/SDL2 -D_REENTRANT
+		GINCS += -I/usr/include/iniparser `sdl2-config --cflags`
+                                                 # -I/usr/include/SDL2 -D_REENTRANT
 		CLIBS += -L/usr/lib/x86_64-linux-gnu
 		GLIBS += -L/usr/lib/x86_64-linux-gnu
 		LDFLAGS += -liniparser
