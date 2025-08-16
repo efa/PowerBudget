@@ -1,8 +1,8 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions
+name: GitHub Actions CI
+run-name: ${{ github.actor }} use GitHub Actions for CI
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  GitHub-Actions-CI:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Repository ${{ github.repository }}, branch ${{ github.ref }}"
