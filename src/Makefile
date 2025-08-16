@@ -112,7 +112,7 @@ force: clean bin
 pkg:
 	@echo ""
 	mv $(BINCLI) $(BINGUI) ..
-	@makePkg.sh $(CI) $(PKG) $(BIT)
+	@./makePkg.sh $(CI) $(PKG) $(BIT)
 
 rel: force pkg
 
