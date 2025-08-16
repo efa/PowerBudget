@@ -29,11 +29,13 @@ jobs:
              git push origin :ci-latest || true
              git tag -m ci-latest ci-latest
              git push --tags
-        env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env: 
+             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create release
         id: create_release
         uses: ncipollo/release-action@v1.18.0
-        env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env: 
+             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           allowUpdates: true
           tag: ci-latest
