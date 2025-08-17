@@ -11,21 +11,25 @@ jobs:
           echo "Repository: ${{ github.repository }}, branch: ${{ github.ref }}"
       - run: |
           echo "Running on: ${{ runner.os }}, triggered by: ${{ github.event_name }}"
-      - name: update distro
+      - name: Update distro
         run: sudo apt update
-      - name: upgrade distro
+      - name: Upgrade distro
         run: sudo apt upgrade
-      - name: Check out code
-        uses: actions/checkout@v4
       - name: Install deps
         run: sudo apt install libiniparser-dev libsdl2-dev ;
              sudo apt install 7zip genisoimage grep tar wget
+      - name: Check out code
+        uses: actions/checkout@v4
       - name: Build ci
         run: cd src ; make ci
       - name: List files in the repository
         run: ls -l ${{ github.workspace }}/.. ;
              ls -l ${{ github.workspace }} ;
              ls -l ${{ github.workspace }}/src
+      - name: Get date
+        run: echo "DATE:${DATE}" ;
+             export DATE=`date -I` ;
+             echo "DATE:${DATE}"
       - name: Reset ci-latest tag
         run: |
           # VERSION=${{ steps.version_number.outputs.version }}
@@ -35,9 +39,10 @@ jobs:
           git push origin :ci-latest || true
           git tag -m ci-latest ci-latest
           git push --tags
+          echo "DATE:${DATE}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create CI release
+      - name: Create CI rel
         id: create_release
         uses: ncipollo/release-action@v1.18.0
         env:
@@ -50,8 +55,8 @@ jobs:
           prerelease: true
           replacesArtifacts: true
           artifacts: "
-            ../powerBudget00001a_2025-08-16_Linux_x86_64_64bit.tgz,
-            ../powerBudget00001a_2025-08-16_Linux_x86_64_64bit.AppImage
+            ../powerBudget00001a_${DATE}_Linux_x86_64_64bit.tgz,
+            ../powerBudget00001a_${DATE}_Linux_x86_64_64bit.AppImage
           "
       - run: |
           echo "End status: ${{ job.status }}"

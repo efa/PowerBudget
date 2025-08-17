@@ -27,7 +27,7 @@ DEPSPATHMGW64="/mingw64/bin" # path of DLLs needed to generate the Mingw64 packa
 DEPSPATHMGW32="/mingw32/bin" # path of DLLs needed to generate the Mingw32 package
 DEPSLISTMGW="" # list of dll for MinGW
 
-APP="PowerBudget"     # app name
+APP="PowerBudget"    # app name
 SRCPKG=".." # source package path
 BIN="powerBudgetGui" # binary
 DSTPATH=".." # path where create the Linux|Mingw/MXE|OSX package directory
@@ -78,7 +78,7 @@ else
    BIT="$2"
 fi
 
-BIN="$BIN$PKG$BIN"
+BIN="$BIN$PKG$BIT"
 if [[ -f $BIN ]]; then
    mkdir -p $DSTPATH
 else
