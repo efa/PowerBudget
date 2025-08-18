@@ -25,8 +25,8 @@ jobs:
       - name: List files in the repository
         run: pwd ;
              ls -l ${{ github.workspace }}/.. ;
-             ls -l ${{ github.workspace }} ;
-             ls -l ${{ github.workspace }}/src
+             # ls -l ${{ github.workspace }} ;
+             # ls -l ${{ github.workspace }}/src
       - name: Get date
         run: |
              export DATE=$(date -I)
@@ -59,8 +59,8 @@ jobs:
           prerelease: true
           replacesArtifacts: true
           artifacts: "
-            ../powerBudget_*_Linux_x86_64_64bit.tgz,
-            ../powerBudget_*_Linux_x86_64_64bit.AppImage
+            ../PowerBudget_*_Linux_x86_64_64bit.tgz,
+            ../PowerBudget_*_Linux_x86_64_64bit.AppImage
           "
       - run: |
           echo "End status: ${{ job.status }}"
