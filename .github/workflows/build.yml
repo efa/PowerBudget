@@ -23,29 +23,34 @@ jobs:
       - name: Build ci
         run: cd src ; make ci
       - name: List files in the repository
-        run: ls -l ${{ github.workspace }}/.. ;
+        run: pwd ;
+             ls -l ${{ github.workspace }}/.. ;
              ls -l ${{ github.workspace }} ;
              ls -l ${{ github.workspace }}/src
       - name: Get date
         run: |
-             # export DATE=$(date -I) ;
-             echo "DATE: $DATE "
-       - name: Reset ci-latest tag
+             export DATE=$(date -I)
+             echo "DATE: '${DATE}'"
+             echo "DATE=${DATE}" >> $GITHUB_ENV
+      - name: Reset ci-latest tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATE: ${{ env.DATE }}
         run: |
-          # VERSION=${{ steps.version_number.outputs.version }}
+          VERSION=${{ steps.version_number.outputs.version }}
           git config --global user.email "ci@github.com"
           git config --global user.name "Github CI"
           git tag -d ci-latest       || true
           git push origin :ci-latest || true
           git tag -m ci-latest ci-latest
           git push --tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "DATE: '${DATE}'"
       - name: Create CI rel
         id: create_release
         uses: ncipollo/release-action@v1.18.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATE: ${{ env.DATE }}
         with:
           allowUpdates: true
           draft: false
