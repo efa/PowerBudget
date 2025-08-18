@@ -44,7 +44,7 @@ jobs:
           echo "DATE:$DATE"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DATE:
+          DATE: `date -I`
       - name: Create CI rel
         id: create_release
         uses: ncipollo/release-action@v1.18.0
