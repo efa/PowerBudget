@@ -29,6 +29,6 @@ jobs:
       - name: Get date
         run: |
              export DATE=$(date -I)
-             echo "DATE: ${DATE} "
+             echo "DATE: ${{DATE}} "
       - run: |
           echo "End status: ${{ job.status }}"
