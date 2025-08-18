@@ -28,8 +28,11 @@ jobs:
              ls -l ${{ github.workspace }}/src
       - name: Get date
         run: |
-             export DATE=`date -I` ;
+             export DATE=`date -I`
              echo "DATE:${DATE}"
+          # echo "DATE:${{DATE}}"
+          # echo "DATE:${DATE}"
+          # echo "DATE:$DATE"
       - name: Reset ci-latest tag
         run: |
           # VERSION=${{ steps.version_number.outputs.version }}
@@ -39,10 +42,6 @@ jobs:
           git push origin :ci-latest || true
           git tag -m ci-latest ci-latest
           git push --tags
-          export DATE=`date -I`
-          # echo "DATE:${{DATE}}"
-          # echo "DATE:${DATE}"
-          # echo "DATE:$DATE"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create CI rel
