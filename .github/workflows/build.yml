@@ -29,10 +29,10 @@ jobs:
       - name: Get date
         run: |
              export DATE=`date -I` ;
-             echo "DATE:${{DATE}}" ;
-             echo "DATE:${DATE}" ;
-             echo "DATE:$DATE"
-      - name: Reset ci-latest tag
+             echo "DATE:$DATE" ;
+             # echo "DATE:${DATE}" ;
+             # echo "DATE:${{DATE}}" ;
+       - name: Reset ci-latest tag
         run: |
           # VERSION=${{ steps.version_number.outputs.version }}
           git config --global user.email "ci@github.com"
