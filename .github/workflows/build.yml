@@ -28,9 +28,9 @@ jobs:
              ls -l ${{ github.workspace }}/src
       - name: Get date
         run: |
-             export DATE=`date -I`
-             echo "DATE:${{DATE}}"
-             echo "DATE:${DATE}"
+             export DATE=`date -I` ;
+             echo "DATE:${{DATE}}" ;
+             echo "DATE:${DATE}" ;
              echo "DATE:$DATE"
       - name: Reset ci-latest tag
         run: |
