@@ -30,7 +30,7 @@ jobs:
         run: |
              export DATE=$(date -I)
              echo "DATE: '${DATE}'"
-             echo "DATE=${DATE}" >> $GITHUB_ENV
+             echo "DATE='${DATE}'" >> $GITHUB_ENV
       - name: Show date
         env:
           DATE: ${{ env.DATE }}
