@@ -60,7 +60,7 @@ if (test "$1" = "-y") then
    shift
 fi
 if [[ "$1" = "" || "$1" != "Linux" && "$1" != "WinMxe" && "$1" != "WinMgw" && "$1" != "Osx" ]]; then
-   echo "ERROR: makePkg.sh unsupported/miss target platform to create package"
+   echo "ERROR: makePkg.sh unsupported/miss target:'$1' platform to create package"
    echo "Syntax: $ makePkg.sh [-y] Linux|WinMxe|WinMgw|Osx [32|64]"
    echo "          -y for batch execution without confirmations"
    exit

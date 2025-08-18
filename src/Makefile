@@ -112,7 +112,7 @@ bin: all cleanobj strip
 
 force: clean bin
 
-pkg:
+pkg: $(BIN)
 	@echo ""
 	cp -a $(BINCLI) $(BINGUI) ..
 	@./makePkg.sh $(CI) $(PKG) $(BIT)
