@@ -40,9 +40,9 @@ jobs:
           git tag -m ci-latest ci-latest
           git push --tags
           export DATE=`date -I`
-          #echo "DATE:${{DATE}}"
-          #echo "DATE:${DATE}"
-          #echo "DATE:$DATE"
+          # echo "DATE:${{DATE}}"
+          # echo "DATE:${DATE}"
+          # echo "DATE:$DATE"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create CI rel
