@@ -28,5 +28,7 @@ jobs:
              ls -l ${{ github.workspace }}/src
       - name: Get date
         run: |
-             # export DATE=$(date -I) ;
+             export DATE=$(date -I)
              echo "DATE: $DATE "
+      - run: |
+          echo "End status: ${{ job.status }}"
