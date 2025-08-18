@@ -34,6 +34,6 @@ jobs:
         run: |
              echo "DATE: '${DATE}'"
         env:
-          DATE
+          DATE:
       - run: |
           echo "End status: ${{ job.status }}"
