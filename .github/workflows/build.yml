@@ -59,8 +59,8 @@ jobs:
           prerelease: true
           replacesArtifacts: true
           artifacts: "
-            ../powerBudget00001a_${DATE}_Linux_x86_64_64bit.tgz,
-            ../powerBudget00001a_${DATE}_Linux_x86_64_64bit.AppImage
+            ../powerBudget00001a_$DATE_Linux_x86_64_64bit.tgz,
+            ../powerBudget00001a_$DATE_Linux_x86_64_64bit.AppImage
           "
       - run: |
           echo "End status: ${{ job.status }}"
