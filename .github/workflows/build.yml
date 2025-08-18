@@ -21,9 +21,11 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
       - name: Build ci bin
-        run: cd src ; make force
+        run: |
+             cd src
+             make force
       - name: Build ci pkg
-        run: pwd ; cd src ; pwd ; make CI=-y pkg
+        run: pwd ; make CI=-y pkg
       - name: List files in the repository
         run: pwd ;
              ls -l ${{ github.workspace }}/.. ;
