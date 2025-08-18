@@ -23,7 +23,7 @@ jobs:
       - name: Build ci bin
         run: cd src ; make force
       - name: Build ci pkg
-        run: pwd ; cd src ; pwd ; make -DCI=-y pkg
+        run: pwd ; cd src ; pwd ; make CI=-y pkg
       - name: List files in the repository
         run: pwd ;
              ls -l ${{ github.workspace }}/.. ;
