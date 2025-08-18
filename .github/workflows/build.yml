@@ -11,10 +11,10 @@ jobs:
           echo "Repository: ${{ github.repository }}, branch: ${{ github.ref }}"
       - run: |
           echo "Running on: ${{ runner.os }}, triggered by: ${{ github.event_name }}"
-      - name: Update distro
-        run: sudo apt update
-      - name: Upgrade distro
-        run: sudo apt upgrade
+      # - name: Update distro
+      #   run: sudo apt update
+      # - name: Upgrade distro
+      #   run: sudo apt upgrade
       - name: Install deps
         run: sudo apt install libiniparser-dev libsdl2-dev ;
              sudo apt install 7zip genisoimage grep tar wget
@@ -27,7 +27,7 @@ jobs:
              ls -l ${{ github.workspace }} ;
              ls -l ${{ github.workspace }}/src
       - name: Get date
-        run: echo "DATE:${DATE}" ;
+        run: |
              export DATE=`date -I` ;
              echo "DATE:${DATE}"
       - name: Reset ci-latest tag
@@ -39,9 +39,12 @@ jobs:
           git push origin :ci-latest || true
           git tag -m ci-latest ci-latest
           git push --tags
+          echo "DATE:${{DATE}}"
           echo "DATE:${DATE}"
+          echo "DATE:$DATE"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATE:
       - name: Create CI rel
         id: create_release
         uses: ncipollo/release-action@v1.18.0

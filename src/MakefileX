@@ -16,9 +16,9 @@
 #
 # Makefile to cross-build 'PowerBudget' from Linux to Win64 using MinGW64
 # Linux=>Win64
-# depend: $ sudo apt install mingw-w64 mingw-w64-tools
-#         NOTE: cross-build iniparser in: ../iniparser-v4.2.1/
-#               cross-build SDL2 in: ../SDL2-2.30.7/x86_64-w64-mingw32/
+# deps: $ sudo apt install mingw-w64 mingw-w64-tools
+#   NOTE: cross-build iniparser in: ../iniparser-v4.2.1/
+#         cross-build SDL2      in: ../SDL2-2.30.7/x86_64-w64-mingw32/
 #
 # To build for debug use: $ make debug
 
@@ -35,13 +35,13 @@ OBJCLI=$(SRCCLI:.c=.o)
 OBJGUI=$(SRCGUI:.c=.o)
 OBJ=$(OBJCLI) $(OBJGUI)
 
-BINCLI=powerb
-BINGUI=powerbGui
-CLI=$(BINCLI)$(PKG)$(BIT).exe
-GUI=$(BINGUI)$(PKG)$(BIT).exe
+BINCLI=powerBudget$(PKG)$(BIT).exe
+BINGUI=powerBudgetGui$(PKG)$(BIT).exe
+# CLI=$(BINCLI)$(PKG)$(BIT).exe
+# GUI=$(BINGUI)$(PKG)$(BIT).exe
 BIN=$(CLI) $(GUI)
 
-# Tools
+# Cross-build Tools
 CC=/usr/bin/x86_64-w64-mingw32-gcc # Cross-compile to Win64 (package mingw-w64)
 LD=/usr/bin/x86_64-w64-mingw32-ld
 PKGCONFIG=/usr/bin/x86_64-w64-mingw32-pkg-config
@@ -61,28 +61,30 @@ LGFLAGS=$(LDFLAGS) `$(PKGCONFIG) --define-prefix --libs-only-l --libs-only-other
 
 all: CFLAGS+=-O3
 all: GFLAGS+=-O3
-all: $(CLI) $(GUI)
-	@echo CLI:$(CLI) GUI:$(GUI)
+all: cli gui
 
-$(CLI):
-	@echo Building CLI:$(CLI) ...
-	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(CLI)
+cli:
+	@echo Building CLI: $(BINCLI) ...
+	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(BINCLI)
 
-$(GUI):
-	@echo Building GUI:$(GUI) ...
-	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(GUI)
+gui:
+	@echo Building GUI: $(BINGUI) ...
+	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(BINGUI)
+
+#fileIo.o: fileIo.c
+
+#powerbLib.o: powerbLib.c
 
 strip:
-	strip $(CLI) $(GUI)
+	strip $(BIN)
 
 cleanobj:
 	rm -f *.o
 
 cleanbin:
-	rm -f $(CLI) $(GUI)
+	rm -f $(BIN)
 
-clean:
-	rm -f *.o $(CLI) $(GUI)
+clean: cleanobj cleanbin
 
 debug: CFLAGS+=-O1 -g
 debug: GFLAGS+=-O1 -g
@@ -91,11 +93,10 @@ debug: cleanobj all cleanobj
 bin: all cleanobj strip
 
 force: clean bin
-	rm -f *.o
 
 pkg:
 	@echo ""
-	mv $(CLI) $(GUI) ..
-	@makePkg.sh $(PKG) $(BIT)
+	cp -a $(BINCLI) $(BINGUI) ..
+	@./makePkg.sh $(CI) $(PKG) $(BIT)
 
 rel: force pkg

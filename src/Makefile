@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with PowerBudget. If not, see <http://www.gnu.org/licenses/>.
 
-# Makefile used to build to: Linux, MinGW/Msys2/Win, macOS
+# Makefile used to build to: Linux, MinGW/Msys2/Win, MacOS
 # Win: MinGw64=>bin64 (MinGW/MSYS2)
-# depend: $ sudo apt install libiniparser-dev, libsdl2-dev
+# deps: $ sudo apt install libiniparser-dev, libsdl2-dev
 #
 # To build for debug use: $ make debug
 
@@ -57,7 +57,7 @@ ifeq ($(OS),Windows_NT)
 	LGFLAGS += -liniparser `sdl2-config --libs` -lSDL2main
 else # Unix
 	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Darwin) # macOS
+	ifeq ($(UNAME_S),Darwin) # 
 		CINCS += -I/usr/include/iniparser
 		GINCS += -I/usr/include/iniparser `sdl2-config --cflags`
 		CLIBS += -L/usr/lib/x86_64-linux-gnu
@@ -77,10 +77,14 @@ endif
 
 all: CFLAGS+=-O3
 all: GFLAGS+=-O3
-all: $(BIN)
+all: cli gui
 
-$(BIN):
+cli:
+	@echo Building CLI: $(BINCLI) ...
 	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(BINCLI)
+
+gui:
+	@echo Building GUI: $(BINGUI) ...
 	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(BINGUI)
 
 #fileIo.o: fileIo.c
@@ -102,9 +106,7 @@ debug: CFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
 debug: GFLAGS+=-O1 -g -fsanitize=address -fno-omit-frame-pointer
 debug: LDFLAGS+=-fsanitize=address
 debug: LGFLAGS+=-fsanitize=address
-debug:
-	$(CC) $(CFLAGS) $(CINCS) $(SRCCLI) $(CLIBS) $(LDFLAGS) -o $(BINCLI)
-	$(CC) $(GFLAGS) $(GINCS) $(SRCGUI) $(GLIBS) $(LGFLAGS) -o $(BINGUI)
+debug: cleanobj all cleanobj
 
 bin: all cleanobj strip
 
@@ -112,7 +114,7 @@ force: clean bin
 
 pkg:
 	@echo ""
-	mv $(BINCLI) $(BINGUI) ..
+	cp -a $(BINCLI) $(BINGUI) ..
 	@./makePkg.sh $(CI) $(PKG) $(BIT)
 
 rel: force pkg
