@@ -20,13 +20,13 @@ jobs:
              sudo apt install 7zip genisoimage grep tar wget
       - name: Check out code
         uses: actions/checkout@v4
-      - name: Build ci
-        run: cd src ; make ci
+      - name: Build ci bin
+        run: cd src ; make force
+      - name: Build ci pkg
+        run: make pkg
       - name: List files in the repository
         run: pwd ;
              ls -l ${{ github.workspace }}/.. ;
-             # ls -l ${{ github.workspace }} ;
-             # ls -l ${{ github.workspace }}/src
       - name: Get date
         run: |
              export DATE=$(date -I)
@@ -50,7 +50,6 @@ jobs:
         uses: ncipollo/release-action@v1.18.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DATE: ${{ env.DATE }}
         with:
           allowUpdates: true
           draft: false
